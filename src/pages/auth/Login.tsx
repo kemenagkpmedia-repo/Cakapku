@@ -7,7 +7,9 @@ import { useAuthStore, Role } from '../../store/authStore';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Label } from '../../components/ui/Label';
+import api from '../../api/axios';
 import { Card, CardContent } from '../../components/ui/Card';
+
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -18,29 +20,35 @@ export const Login: React.FC = () => {
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);
-    // MOCK API CALL
-    setTimeout(() => {
-      // Simulate login based on email to test different roles
-      let role: Role = 'user';
-      if (data.email.toLowerCase().includes('admin')) role = 'admin';
-      else if (data.email.toLowerCase().includes('operator')) role = 'operator';
-      else if (data.email.toLowerCase().includes('pimpinan')) role = 'pimpinan';
+    try {
+      const response = await api.post('/login', {
+        username: data.username,
+        password: data.password
+      });
 
-      login(
-        { id: 1, name: data.email.split('@')[0], email: data.email, role, satker_id: 1 },
-        'mock-jwt-token-123'
-      );
+      const { user, token } = response.data;
+      
+      // Normalisasi role ke lowercase agar sesuai dengan ProtectedRoute dan logic aplikasi
+      const role = user.role.toLowerCase() as Role;
+      const normalizedUser = { ...user, role };
+      
+      login(normalizedUser, token);
       
       setIsLoading(false);
       
-      // Redirect based on role
+      // Redirect berdasarkan role yang sudah dinormalisasi
       switch (role) {
         case 'admin': navigate('/admin/users'); break;
         case 'operator': navigate('/operator/perkin'); break;
         case 'user': navigate('/user/kinerja'); break;
         case 'pimpinan': navigate('/pimpinan/dashboard'); break;
+        default: navigate('/user/kinerja');
       }
-    }, 1500);
+    } catch (error: any) {
+      setIsLoading(false);
+      console.error('Login failed:', error);
+      alert(error.response?.data?.message || 'Login gagal. Silakan periksa kembali kredensial Anda.');
+    }
   };
 
   const containerVariants = {
@@ -100,32 +108,28 @@ export const Login: React.FC = () => {
           <CardContent className="p-8 sm:p-12">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <motion.div variants={itemVariants} className="space-y-2">
-                <Label htmlFor="email" className="text-[0.7rem] font-black text-text-muted uppercase tracking-widest ml-1">Alamat Email</Label>
+                <Label htmlFor="username" className="text-[0.7rem] font-black text-text-muted uppercase tracking-widest ml-1">Username / Email / NIP</Label>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent transition-colors">
                     <Mail className="w-4 h-4" />
                   </div>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="nama@kemenag.go.id"
+                    id="username"
+                    type="text"
+                    placeholder="Username, Email atau NIP"
                     className="pl-11 h-14 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-accent/10 focus:bg-white transition-all font-semibold"
-                    {...register('email', { 
-                      required: 'Email wajib diisi',
-                      pattern: {
-                        value: /\S+@\S+\.\S+/,
-                        message: 'Format email tidak valid'
-                      }
+                    {...register('username', { 
+                      required: 'Username/Email/NIP wajib diisi'
                     })}
                   />
                 </div>
-                {errors.email && (
+                {errors.username && (
                   <motion.p 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     className="text-[0.7rem] text-rose-500 font-bold mt-1 ml-1 flex items-center gap-1.5"
                   >
-                    <Info className="w-3 h-3" /> {errors.email.message as string}
+                    <Info className="w-3 h-3" /> {errors.username.message as string}
                   </motion.p>
                 )}
               </motion.div>
@@ -207,8 +211,8 @@ export const Login: React.FC = () => {
                     <Info className="w-4 h-4" />
                   </div>
                   <p className="text-[0.65rem] font-bold text-text-muted italic leading-relaxed">
-                    Uji coba role dengan domain: <br/> 
-                    <span className="text-accent">@admin, @operator, @user, @pimpinan</span>
+                    Gunakan kredensial yang terdaftar <br/> 
+                    <span className="text-accent">Username, Email, atau NIP</span>
                   </p>
                 </div>
                 <p className="text-[0.7rem] font-bold text-text-muted/60 uppercase tracking-widest">

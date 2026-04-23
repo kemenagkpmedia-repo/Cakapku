@@ -96,11 +96,11 @@ export const Header: React.FC = () => {
           aria-expanded={isDropdownOpen}
         >
           <div className="text-right hidden sm:block">
-            <div className="text-[0.8125rem] font-bold text-text-header leading-none tracking-tight">{user?.name}</div>
+            <div className="text-[0.8125rem] font-bold text-text-header leading-none tracking-tight">{user?.nama}</div>
             <div className="text-[0.65rem] text-text-muted mt-1 font-medium">{user?.email}</div>
           </div>
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-accent/20 border border-white/20">
-            {user?.name.charAt(0).toUpperCase()}
+            {user?.nama.charAt(0).toUpperCase()}
           </div>
           <ChevronDown className={cn("w-4 h-4 text-text-muted/60 transition-transform duration-300", isDropdownOpen && "rotate-180")} />
         </button>
