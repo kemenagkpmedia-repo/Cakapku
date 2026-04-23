@@ -5,16 +5,13 @@ export type Role = 'admin' | 'operator' | 'user' | 'pimpinan';
 
 export interface User {
   id: number;
-  name: string;
+  nama?: string;
   email: string;
   role: Role;
-  satker_id?: number;
+  id_satker?: number;
   nip?: string;
   jabatan?: string;
-  pangkat?: string;
-  golongan?: string;
-  phone?: string;
-  address?: string;
+  gol_ruang?: string;
 }
 
 interface AuthState {

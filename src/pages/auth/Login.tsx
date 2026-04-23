@@ -26,7 +26,12 @@ export const Login: React.FC = () => {
         password: data.password
       });
 
-      const { user, token } = response.data;
+      const token = response.data.token || response.data.access_token || response.data.data?.token;
+      const user = response.data.user || response.data.data?.user;
+
+      if (!token) {
+        throw new Error('Token tidak ditemukan dalam respon API');
+      }
       
       // Normalisasi role ke lowercase agar sesuai dengan ProtectedRoute dan logic aplikasi
       const role = user.role.toLowerCase() as Role;

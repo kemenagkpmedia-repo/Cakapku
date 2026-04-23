@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -16,7 +16,7 @@ import { Role } from '../../store/authStore';
 import { cn } from '../../utils/cn';
 
 export const ManajemenUser: React.FC = () => {
-  const { users, addUser, addUsers, updateUser, deleteUser } = useUserStore();
+  const { users, isLoading, fetchUsers, addUser, addUsers, updateUser, deleteUser } = useUserStore();
   const { satkers } = useSatkerStore();
   const { logout, loginAs } = useAuthStore();
   const navigate = useNavigate();
@@ -27,18 +27,24 @@ export const ManajemenUser: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     role: 'user' as Role,
-    satker_id: '',
+    id_satker: '',
     nip: '',
-    jabatan: ''
+    jabatan: '',
+    gol_ruang: '',
   });
 
   const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.nama || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.nip?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -48,30 +54,31 @@ export const ManajemenUser: React.FC = () => {
       name: '',
       email: '',
       role: 'user',
-      satker_id: '',
+      id_satker: '',
       nip: '',
-      jabatan: ''
+      jabatan: '',
+      gol_ruang: '',
     });
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.name && formData.email) {
-      addUser({
+      await addUser({
         ...formData,
-        satker_id: formData.satker_id ? Number(formData.satker_id) : undefined
+        id_satker: formData.id_satker ? Number(formData.id_satker) : undefined
       });
       resetForm();
       setIsAddModalOpen(false);
     }
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedUser && formData.name && formData.email) {
-      updateUser(selectedUser.id, {
+      await updateUser(selectedUser.id, {
         ...formData,
-        satker_id: formData.satker_id ? Number(formData.satker_id) : undefined
+        id_satker: formData.id_satker ? Number(formData.id_satker) : undefined
       });
       resetForm();
       setSelectedUser(null);
@@ -79,9 +86,9 @@ export const ManajemenUser: React.FC = () => {
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedUser) {
-      deleteUser(selectedUser.id);
+      await deleteUser(selectedUser.id);
       setSelectedUser(null);
       setIsDeleteModalOpen(false);
     }
@@ -114,7 +121,7 @@ export const ManajemenUser: React.FC = () => {
         name: item.Nama || item.name,
         email: item.Email || item.email,
         role: (item.Role || item.role || 'user').toLowerCase() as Role,
-        satker_id: item.Satker_ID || item.satker_id ? Number(item.Satker_ID || item.satker_id) : undefined,
+        id_satker: item.Satker_ID || item.id_satker ? Number(item.Satker_ID || item.id_satker) : undefined,
         nip: item.NIP || item.nip,
         jabatan: item.Jabatan || item.jabatan
       }));
@@ -205,84 +212,91 @@ export const ManajemenUser: React.FC = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 border-b border-border">
-                  <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest w-24 text-center">ID User</th>
-                  <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Identitas Pegawai</th>
-                  <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Akses & Satker</th>
-                  <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="px-6 py-5 text-center text-sm font-black text-accent">{user.id}</td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent font-black text-sm shrink-0">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-extrabold text-text-header tracking-tight">{user.name}</div>
-                          <div className="text-[0.75rem] text-text-muted font-medium mt-0.5">{user.email}</div>
-                          <div className="text-[0.65rem] text-accent font-bold mt-1 uppercase tracking-wider">{user.nip || 'NIP Belum Diatur'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="space-y-1.5">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/5 text-accent border border-accent/10">
-                          <Shield className="w-3 h-3" />
-                          <span className="text-[0.65rem] font-black uppercase tracking-wider">{user.role}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[0.8rem] font-semibold text-text-main">
-                          <Building2 className="w-3.5 h-3.5 text-text-muted" />
-                          {getSatkerName(user.satker_id)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-end gap-1.5 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                        <button 
-                          onClick={() => handleLoginAs(user)}
-                          title="Login As"
-                          className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
-                        >
-                          <LogIn className="w-4.5 h-4.5" />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setFormData({
-                              name: user.name,
-                              email: user.email,
-                              role: user.role,
-                              satker_id: user.satker_id?.toString() || '',
-                              nip: user.nip || '',
-                              jabatan: user.jabatan || ''
-                            });
-                            setIsEditModalOpen(true);
-                          }}
-                          className="p-2 rounded-xl text-accent hover:bg-accent/10 transition-colors border border-transparent hover:border-accent/10"
-                        >
-                          <Edit3 className="w-4.5 h-4.5" />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setIsDeleteModalOpen(true);
-                          }}
-                          className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-colors border border-transparent hover:border-rose-100"
-                        >
-                          <Trash2 className="w-4.5 h-4.5" />
-                        </button>
-                      </div>
-                    </td>
+            {isLoading ? (
+              <div className="p-20 text-center flex flex-col items-center justify-center">
+                <div className="w-10 h-10 border-4 border-accent/20 border-t-accent rounded-full animate-spin mb-4" />
+                <p className="text-sm font-bold text-text-muted uppercase tracking-widest">Memuat Data User...</p>
+              </div>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-border">
+                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest w-24 text-center">ID User</th>
+                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Identitas Pegawai</th>
+                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Akses & Satker</th>
+                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest text-right">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
+                      <td className="px-6 py-5 text-center text-sm font-black text-accent">{user.id}</td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent font-black text-sm shrink-0">
+                            {(user.nama).charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-extrabold text-text-header tracking-tight">{user.nama}</div>
+                            <div className="text-[0.75rem] text-text-muted font-medium mt-0.5">{user.email}</div>
+                            <div className="text-[0.65rem] text-accent font-bold mt-1 uppercase tracking-wider">{user.nip || 'NIP Belum Diatur'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="space-y-1.5">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/5 text-accent border border-accent/10">
+                            <Shield className="w-3 h-3" />
+                            <span className="text-[0.65rem] font-black uppercase tracking-wider">{user.role}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[0.8rem] font-semibold text-text-main">
+                            <Building2 className="w-3.5 h-3.5 text-text-muted" />
+                            {getSatkerName(user.id_satker)}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center justify-end gap-1.5 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                          <button 
+                            onClick={() => handleLoginAs(user)}
+                            title="Login As"
+                            className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
+                          >
+                            <LogIn className="w-4.5 h-4.5" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setFormData({
+                                name: user.nama,
+                                email: user.email,
+                                role: user.role,
+                                id_satker: user.id_satker?.toString() || '',
+                                nip: user.nip || '',
+                                jabatan: user.jabatan || ''
+                              });
+                              setIsEditModalOpen(true);
+                            }}
+                            className="p-2 rounded-xl text-accent hover:bg-accent/10 transition-colors border border-transparent hover:border-accent/10"
+                          >
+                            <Edit3 className="w-4.5 h-4.5" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setIsDeleteModalOpen(true);
+                            }}
+                            className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-colors border border-transparent hover:border-rose-100"
+                          >
+                            <Trash2 className="w-4.5 h-4.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
           
           {filteredUsers.length === 0 && (
@@ -332,8 +346,8 @@ export const ManajemenUser: React.FC = () => {
             <div className="space-y-2">
               <Label>Satker</Label>
               <Select 
-                value={formData.satker_id} 
-                onChange={(e) => setFormData({...formData, satker_id: e.target.value})}
+                value={formData.id_satker} 
+                onChange={(e) => setFormData({...formData, id_satker: e.target.value})}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
                   ...satkers.map(s => ({ label: s.name, value: s.id.toString() }))
@@ -394,8 +408,8 @@ export const ManajemenUser: React.FC = () => {
             <div className="space-y-2">
               <Label>Satker</Label>
               <Select 
-                value={formData.satker_id} 
-                onChange={(e) => setFormData({...formData, satker_id: e.target.value})}
+                value={formData.id_satker} 
+                onChange={(e) => setFormData({...formData, id_satker: e.target.value})}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
                   ...satkers.map(s => ({ label: s.name, value: s.id.toString() }))
@@ -471,7 +485,7 @@ export const ManajemenUser: React.FC = () => {
         onClose={() => setIsDeleteModalOpen(false)}
         title="Konfirmasi Hapus"
         variant="danger"
-        description={`Apakah Anda yakin ingin menghapus user "${selectedUser?.name}"? Seluruh data terkait akan terhapus secara permanen.`}
+        description={`Apakah Anda yakin ingin menghapus user "${selectedUser?.nama || selectedUser?.name}"? Seluruh data terkait akan terhapus secara permanen.`}
         footer={
           <div className="flex gap-3 w-full">
             <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} className="flex-1 rounded-xl h-12 uppercase font-bold tracking-widest text-[0.7rem]">Batal</Button>
