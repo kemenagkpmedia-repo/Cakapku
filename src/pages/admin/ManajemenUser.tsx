@@ -208,16 +208,16 @@ export const ManajemenUser: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-border">
-                  <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest w-16 text-center">No</th>
+                  <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest w-24 text-center">ID User</th>
                   <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Identitas Pegawai</th>
                   <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Akses & Satker</th>
                   <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredUsers.map((user, index) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="px-6 py-5 text-center text-sm font-bold text-text-muted/60">{index + 1}</td>
+                    <td className="px-6 py-5 text-center text-sm font-black text-accent">{user.id}</td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent font-black text-sm shrink-0">

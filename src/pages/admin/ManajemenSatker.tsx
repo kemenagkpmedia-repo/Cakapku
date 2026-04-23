@@ -5,17 +5,23 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Label } from '../../components/ui/Label';
 import { Modal } from '../../components/ui/Modal';
-import { useSatkerStore } from '../../store/satkerStore';
-import { Building2, Plus, Edit3, Trash2, Search, AlertTriangle } from 'lucide-react';
+import { useSatkerStore, Satker } from '../../store/satkerStore';
+import { useUserStore } from '../../store/userStore';
+import { Building2, Plus, Edit3, Trash2, Search, AlertTriangle, User } from 'lucide-react';
+import { Select } from '../../components/ui/Select';
 
 export const ManajemenSatker: React.FC = () => {
   const { satkers, addSatker, updateSatker, deleteSatker } = useSatkerStore();
+  const { users } = useUserStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedSatker, setSelectedSatker] = useState<{ id: number; name: string } | null>(null);
+  const [selectedSatker, setSelectedSatker] = useState<Satker | null>(null);
   const [satkerName, setSatkerName] = useState('');
+  const [pimpinanId, setPimpinanId] = useState<string>('');
+
+  const pimpinanUsers = users.filter(u => u.role === 'pimpinan');
 
   const filteredSatkers = satkers.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -24,8 +30,9 @@ export const ManajemenSatker: React.FC = () => {
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (satkerName.trim()) {
-      addSatker(satkerName.trim());
+      addSatker(satkerName.trim(), pimpinanId ? parseInt(pimpinanId) : undefined);
       setSatkerName('');
+      setPimpinanId('');
       setIsAddModalOpen(false);
     }
   };
@@ -33,8 +40,9 @@ export const ManajemenSatker: React.FC = () => {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedSatker && satkerName.trim()) {
-      updateSatker(selectedSatker.id, satkerName.trim());
+      updateSatker(selectedSatker.id, satkerName.trim(), pimpinanId ? parseInt(pimpinanId) : undefined);
       setSatkerName('');
+      setPimpinanId('');
       setSelectedSatker(null);
       setIsEditModalOpen(false);
     }
@@ -105,7 +113,13 @@ export const ManajemenSatker: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-text-header tracking-tight">{satker.name}</h3>
-                      <p className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest mt-0.5">ID: {satker.id}</p>
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        <p className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest">ID: {satker.id}</p>
+                        <div className="flex items-center gap-1.5 text-[0.65rem] text-accent font-bold uppercase tracking-widest">
+                          <User className="w-3 h-3" />
+                          <span>Pimpinan: {pimpinanUsers.find(u => u.id === satker.pimpinan_id)?.name || 'Belum Ditentukan'} {satker.pimpinan_id ? `(ID: ${satker.pimpinan_id})` : ''}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -114,6 +128,7 @@ export const ManajemenSatker: React.FC = () => {
                       onClick={() => {
                         setSelectedSatker(satker);
                         setSatkerName(satker.name);
+                        setPimpinanId(satker.pimpinan_id?.toString() || '');
                         setIsEditModalOpen(true);
                       }}
                       className="p-2 rounded-lg text-accent hover:bg-accent/10 transition-colors"
@@ -155,6 +170,19 @@ export const ManajemenSatker: React.FC = () => {
               autoFocus
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="add-pimpinan">Pimpinan Satker</Label>
+            <Select 
+              id="add-pimpinan"
+              value={pimpinanId} 
+              onChange={(e) => setPimpinanId(e.target.value)}
+              className="h-12 rounded-xl"
+              options={[
+                { label: 'Tanpa Pimpinan', value: '' },
+                ...pimpinanUsers.map(u => ({ label: u.name, value: u.id.toString() }))
+              ]}
+            />
+          </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)} className="flex-1 rounded-xl h-12 uppercase font-bold tracking-widest text-[0.7rem]">Batal</Button>
             <Button type="submit" className="flex-1 rounded-xl h-12 uppercase font-bold tracking-widest text-[0.7rem]">Simpan</Button>
@@ -178,6 +206,19 @@ export const ManajemenSatker: React.FC = () => {
               onChange={(e) => setSatkerName(e.target.value)}
               className="h-12 rounded-xl"
               autoFocus
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-pimpinan">Pimpinan Satker</Label>
+            <Select 
+              id="edit-pimpinan"
+              value={pimpinanId} 
+              onChange={(e) => setPimpinanId(e.target.value)}
+              className="h-12 rounded-xl"
+              options={[
+                { label: 'Tanpa Pimpinan', value: '' },
+                ...pimpinanUsers.map(u => ({ label: u.name, value: u.id.toString() }))
+              ]}
             />
           </div>
           <div className="flex gap-3 pt-2">
