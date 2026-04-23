@@ -1,0 +1,6 @@
+{
+  "name": "Cakapku",
+  "description": "Aplikasi SPA untuk pencatatan kinerja harian pegawai dengan role-based access control (Admin, Operator, User, Pimpinan), dashboard analitik, dan manajemen IKSK.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

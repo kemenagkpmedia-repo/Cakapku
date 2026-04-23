@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0f172a;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-bg: #fdfdfd;
+  --color-surface: #ffffff;
+  --color-sidebar: #1e293b;
+  --color-border: #f1f5f9;
+  --color-text-main: #1e293b;
+  --color-text-header: #0f172a;
+  --color-text-muted: #64748b;
+  --color-success: #10b981;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.04), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --shadow-elegant: 0 20px 25px -5px rgba(0, 0, 0, 0.03), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(215, 94%, 90%, 1) 0px, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(225, 100%, 95%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(210, 100%, 92%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsla(215, 94%, 90%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 50%, hsla(225, 100%, 95%, 1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(210, 100%, 92%, 1) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, hsla(225, 100%, 95%, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(215, 94%, 90%, 1) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: var(--color-text-main);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    color: var(--color-text-header);
+    letter-spacing: -0.025em;
+  }
+}
+
+.glass-panel {
+  isolation: isolate;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+.mesh-bg {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(215, 94%, 90%, 1) 0px, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 100%, 95%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(210, 100%, 92%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(215, 94%, 90%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 50%, hsla(225, 100%, 95%, 1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(210, 100%, 92%, 1) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, hsla(225, 100%, 95%, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(215, 94%, 90%, 1) 0px, transparent 50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
