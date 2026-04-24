@@ -34,13 +34,13 @@ export default function App() {
         <Route element={<MainLayout />}>
           
           {/* Admin Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
             <Route path="/admin/users" element={<ManajemenUser />} />
             <Route path="/admin/satker" element={<ManajemenSatker />} />
           </Route>
 
           {/* Operator Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['operator']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['OPERATOR']} />}>
             <Route path="/operator/perkin" element={<ManajemenPerkin />} />
             <Route path="/operator/periode" element={<ManajemenPeriode />} />
             <Route path="/operator/perkin-satker" element={<ManajemenPerkinSatker />} />
@@ -48,7 +48,7 @@ export default function App() {
           </Route>
 
           {/* User Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['user']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['USER']} />}>
             <Route path="/user/kinerja" element={<InputKinerja />} />
             <Route path="/user/riwayat" element={<RiwayatKinerja />} />
             <Route path="/user/biodata" element={<Biodata />} />
@@ -56,7 +56,7 @@ export default function App() {
           </Route>
 
           {/* Pimpinan Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['pimpinan']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['PIMPINAN']} />}>
             <Route path="/pimpinan/dashboard" element={<Dashboard />} />
           </Route>
 

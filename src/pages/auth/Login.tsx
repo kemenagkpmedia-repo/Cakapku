@@ -33,21 +33,21 @@ export const Login: React.FC = () => {
         throw new Error('Token tidak ditemukan dalam respon API');
       }
       
-      // Normalisasi role ke lowercase agar sesuai dengan ProtectedRoute dan logic aplikasi
-      const role = user.role.toLowerCase() as Role;
+      // Simpan role sesuai format dari backend (UPPERCASE)
+      const role = (user.role || '').toUpperCase() as Role;
       const normalizedUser = { ...user, role };
-      
+
       login(normalizedUser, token);
-      
+
       setIsLoading(false);
-      
-      // Redirect berdasarkan role yang sudah dinormalisasi
+
+      // Redirect berdasarkan role (case-insensitive)
       switch (role) {
-        case 'admin': navigate('/admin/users'); break;
-        case 'operator': navigate('/operator/perkin'); break;
-        case 'user': navigate('/user/kinerja'); break;
-        case 'pimpinan': navigate('/pimpinan/dashboard'); break;
-        default: navigate('/user/kinerja');
+        case 'ADMIN':    navigate('/admin/users');         break;
+        case 'OPERATOR': navigate('/operator/perkin');     break;
+        case 'USER':     navigate('/user/kinerja');        break;
+        case 'PIMPINAN': navigate('/pimpinan/dashboard');  break;
+        default:         navigate('/user/kinerja');
       }
     } catch (error: any) {
       setIsLoading(false);

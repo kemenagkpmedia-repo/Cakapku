@@ -12,7 +12,8 @@ import { Select } from '../../components/ui/Select';
 
 export const ManajemenSatker: React.FC = () => {
   const { satkers, isLoading, error, fetchSatkers, addSatker, updateSatker, deleteSatker } = useSatkerStore();
-  const { users, fetchUsers } = useUserStore();
+  const { fetchUsersByRole } = useUserStore();
+  const [pimpinanUsers, setPimpinanUsers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -24,10 +25,8 @@ export const ManajemenSatker: React.FC = () => {
 
   useEffect(() => {
     fetchSatkers();
-    fetchUsers();
-  }, [fetchSatkers, fetchUsers]);
-
-  const pimpinanUsers = users.filter((u) => u.role === 'pimpinan');
+    fetchUsersByRole('PIMPINAN').then(setPimpinanUsers).catch(() => setPimpinanUsers([]));
+  }, [fetchSatkers, fetchUsersByRole]);
 
   const filteredSatkers = satkers.filter((s) =>
     (s.nama_satker || s.name || '').toLowerCase().includes(searchQuery.toLowerCase())

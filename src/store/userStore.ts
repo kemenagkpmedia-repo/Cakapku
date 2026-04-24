@@ -7,6 +7,7 @@ interface UserState {
   isLoading: boolean;
   error: string | null;
   fetchUsers: () => Promise<void>;
+  fetchUsersByRole: (role: string) => Promise<any[]>;
   addUser: (user: Record<string, any>) => Promise<void>;
   addUsers: (users: Record<string, any>[]) => Promise<void>;
   updateUser: (id: number, userData: Record<string, any>) => Promise<void>;
@@ -22,12 +23,17 @@ export const useUserStore = create<UserState>()((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.get('/users');
-      // Handle both { data: [...] } and [...] response shapes
       const raw = response.data?.data || response.data || [];
       set({ users: Array.isArray(raw) ? raw : [], isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
     }
+  },
+
+  fetchUsersByRole: async (role: string) => {
+    const response = await api.get('/users', { params: { role } });
+    const raw = response.data?.data || response.data || [];
+    return Array.isArray(raw) ? raw : [];
   },
 
   addUser: async (user) => {

@@ -206,13 +206,13 @@ export const ManajemenUser: React.FC = () => {
   const handleLoginAs = (user: any) => {
     loginAs(user);
 
-    // Redirect based on the impersonated user's role
-    switch (user.role) {
-      case 'admin': navigate('/admin/users'); break;
-      case 'operator': navigate('/operator/periode'); break;
-      case 'user': navigate('/user/kinerja'); break;
+    // Normalize role — backend returns UPPERCASE, support both formats
+    switch ((user.role || '').toLowerCase()) {
+      case 'admin':    navigate('/admin/users');       break;
+      case 'operator': navigate('/operator/periode');  break;
+      case 'user':     navigate('/user/kinerja');      break;
       case 'pimpinan': navigate('/pimpinan/dashboard'); break;
-      default: navigate('/login');
+      default:         navigate('/login');
     }
   };
 

@@ -23,26 +23,26 @@ export const Sidebar: React.FC = () => {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
 
   const getLinks = () => {
-    switch (user?.role) {
-      case 'admin':
+    switch ((user?.role || '').toUpperCase()) {
+      case 'ADMIN':
         return [
           { to: '/admin/users', icon: Users, label: 'Manajemen User' },
           { to: '/admin/satker', icon: Building, label: 'Manajemen Satker' },
         ];
-      case 'operator':
+      case 'OPERATOR':
         return [
           { to: '/operator/periode', icon: Calendar, label: 'Manajemen Periode' },
           { to: '/operator/perkin', icon: FileText, label: 'Perjanjian Kinerja' },
           { to: '/operator/perkin-satker', icon: Building, label: 'Plotting Satker' },
           { to: '/operator/export', icon: BarChart3, label: 'Export Data' },
         ];
-      case 'user':
+      case 'USER':
         return [
           { to: '/user/kinerja', icon: FileText, label: 'Input Kinerja' },
           { to: '/user/riwayat', icon: CheckSquare, label: 'Riwayat Kinerja' },
           { to: '/user/export', icon: BarChart3, label: 'Export LKB' },
         ];
-      case 'pimpinan':
+      case 'PIMPINAN':
         return [
           { to: '/pimpinan/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         ];

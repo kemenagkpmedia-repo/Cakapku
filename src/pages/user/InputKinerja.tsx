@@ -14,7 +14,7 @@ import { Modal } from '../../components/ui/Modal';
 import { AlertCircle, CheckCircle, Edit3, FileText, PartyPopper, Loader2 } from 'lucide-react';
 
 export const InputKinerja: React.FC = () => {
-  const { perkins, iksks, fetchPerkins, fetchIksks, getFilteredPerkins } = usePerkinStore();
+  const { perkins, iksks, fetchPerkins, fetchPeriodes, fetchIksks, getFilteredPerkins } = usePerkinStore();
   const { user } = useAuthStore();
   const { addRecord, updateRecord, setEditingId, editingId, fetchKinerja, records } = useKinerjaStore();
   const navigate = useNavigate();
@@ -26,14 +26,16 @@ export const InputKinerja: React.FC = () => {
   // Load data dari API saat mount
   useEffect(() => {
     fetchPerkins();
+    fetchPeriodes();
     fetchIksks();
     fetchKinerja();
-  }, [fetchPerkins, fetchIksks, fetchKinerja]);
+  }, [fetchPerkins, fetchPeriodes, fetchIksks, fetchKinerja]);
 
   // Filter perkins berdasarkan satker user dan periode aktif
-  const filteredPerkins = getFilteredPerkins().filter((p) =>
-    p.satker_ids && user?.id_satker ? p.satker_ids.includes(user.id_satker) : false
-  );
+  const filteredPerkins = (getFilteredPerkins() || []).filter((p) => {
+    const userSatkerId = user?.id_satker || user?.satker_id;
+    return p.satker_ids && userSatkerId ? p.satker_ids.includes(Number(userSatkerId)) : false;
+  });
 
   const selectedPerkinId = watch('perkin_id');
 

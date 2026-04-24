@@ -240,7 +240,11 @@ export const usePerkinStore = create<PerkinState>()((set, get) => ({
 
   getFilteredPerkins: () => {
     const { perkins, periods } = get();
+    if (!Array.isArray(perkins) || !Array.isArray(periods)) return [];
     const activePeriodIds = periods.filter((p) => p.isActive || p.status).map((p) => p.id);
-    return perkins.filter((p) => activePeriodIds.includes(p.id_periode ?? (p.period_id as number)));
+    return perkins.filter((p) => {
+      const pId = p.id_periode ?? (p.period_id as number);
+      return activePeriodIds.includes(Number(pId));
+    });
   },
 }));
