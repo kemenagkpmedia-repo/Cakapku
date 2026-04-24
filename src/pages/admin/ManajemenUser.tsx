@@ -39,14 +39,14 @@ export const ManajemenUser: React.FC = () => {
     username: '',
     password: '',
     email: '',
-    role: 'USER' as Role,
+    role: '' as Role,
     id_satker: '',
     nip: '',
     jabatan: '',
     gol_ruang: '',
   });
 
-  console.log(formData)
+  console.log(formData.role)
 
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -437,8 +437,8 @@ export const ManajemenUser: React.FC = () => {
                     key={page}
                     onClick={() => setCurrentPage(page)}
                     className={`w-9 h-9 flex items-center justify-center rounded-xl border text-sm font-bold transition-all ${page === currentPage
-                        ? 'bg-accent border-accent text-white shadow-lg shadow-accent/25'
-                        : 'border-border bg-white text-text-muted hover:border-accent hover:text-accent hover:bg-accent/5'
+                      ? 'bg-accent border-accent text-white shadow-lg shadow-accent/25'
+                      : 'border-border bg-white text-text-muted hover:border-accent hover:text-accent hover:bg-accent/5'
                       }`}
                   >
                     {page}
@@ -508,10 +508,10 @@ export const ManajemenUser: React.FC = () => {
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
                 options={[
-                  { label: 'User', value: 'user' },
-                  { label: 'Operator', value: 'operator' },
-                  { label: 'Pimpinan', value: 'pimpinan' },
-                  { label: 'Admin', value: 'admin' },
+                  { label: 'User', value: 'USER' },
+                  { label: 'Operator', value: 'OPERATOR' },
+                  { label: 'Pimpinan', value: 'PIMPINAN' },
+                  { label: 'Admin', value: 'ADMIN' },
                 ]}
                 className="h-12"
               />
@@ -605,10 +605,10 @@ export const ManajemenUser: React.FC = () => {
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
                 options={[
-                  { label: 'User', value: 'user' },
-                  { label: 'Operator', value: 'operator' },
-                  { label: 'Pimpinan', value: 'pimpinan' },
-                  { label: 'Admin', value: 'admin' },
+                  { label: 'User', value: 'USER' },
+                  { label: 'Operator', value: 'OPERATOR' },
+                  { label: 'Pimpinan', value: 'PIMPINAN' },
+                  { label: 'Admin', value: 'ADMIN' },
                 ]}
                 className="h-12"
               />
