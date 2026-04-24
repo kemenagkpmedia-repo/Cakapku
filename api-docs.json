@@ -1,0 +1,1288 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Cakapku API Documentation",
+        "description": "L5 Swagger OpenApi description",
+        "contact": {
+            "email": "admin@example.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login user",
+                "description": "Login user and returns token",
+                "operationId": "222b2625838e3c57e017987f73598fda",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "username",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "description": "Username or NIP",
+                                        "type": "string",
+                                        "example": "admin"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful login"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout user",
+                "operationId": "ad65cbbd4e9f201619eae184a5961a98",
+                "responses": {
+                    "200": {
+                        "description": "Successful logout"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dashboard/bawahan": {
+            "get": {
+                "tags": [
+                    "Dashboard Pimpinan"
+                ],
+                "summary": "View subordinates' work",
+                "operationId": "0f8648403159adfc071efc6b6d7ccdf1",
+                "responses": {
+                    "200": {
+                        "description": "List of subordinates and their Kinerja"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden - bukan pimpinan satker"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/iksks": {
+            "get": {
+                "tags": [
+                    "IKSK"
+                ],
+                "summary": "Get list of IKSK",
+                "operationId": "2322b717191d15f344545f3380db0418",
+                "responses": {
+                    "200": {
+                        "description": "List of IKSK"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "IKSK"
+                ],
+                "summary": "Create new IKSK",
+                "operationId": "6a1207c2027ccf757dd866ffdfe619a9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_perkin",
+                                    "indikator"
+                                ],
+                                "properties": {
+                                    "id_perkin": {
+                                        "type": "integer"
+                                    },
+                                    "indikator": {
+                                        "type": "string"
+                                    },
+                                    "target_vol": {
+                                        "type": "string"
+                                    },
+                                    "target_satuan": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "IKSK created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/iksks/{id}": {
+            "put": {
+                "tags": [
+                    "IKSK"
+                ],
+                "summary": "Update IKSK",
+                "operationId": "6541a9d9711fbd30303ef1c7ad2e088c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "indikator": {
+                                        "type": "string"
+                                    },
+                                    "target_vol": {
+                                        "type": "string"
+                                    },
+                                    "target_satuan": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "IKSK updated successfully"
+                    },
+                    "404": {
+                        "description": "IKSK not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "IKSK"
+                ],
+                "summary": "Delete IKSK",
+                "operationId": "b85137bad3d87d84f065d10cbfa653db",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "IKSK deleted successfully"
+                    },
+                    "404": {
+                        "description": "IKSK not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/kinerja-harian": {
+            "get": {
+                "tags": [
+                    "Kinerja Harian"
+                ],
+                "summary": "Get list of Kinerja Harian for logged in user",
+                "operationId": "a3ddea2ad38f5ccda4d66db8a92d9559",
+                "responses": {
+                    "200": {
+                        "description": "List of Kinerja Harian"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Kinerja Harian"
+                ],
+                "summary": "Create new Kinerja Harian",
+                "operationId": "edfda919cf39422ce7b4010741fff347",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tanggal",
+                                    "id_iksk",
+                                    "uraian_pekerjaan",
+                                    "status_kehadiran"
+                                ],
+                                "properties": {
+                                    "tanggal": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "id_iksk": {
+                                        "type": "integer"
+                                    },
+                                    "uraian_pekerjaan": {
+                                        "type": "string"
+                                    },
+                                    "status_kehadiran": {
+                                        "description": "Hadir/Izin/Sakit dll",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/kinerja-harian/{id}": {
+            "put": {
+                "tags": [
+                    "Kinerja Harian"
+                ],
+                "summary": "Update Kinerja Harian",
+                "operationId": "26f1c86c798791bfe231afe69df49aae",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "uraian_pekerjaan": {
+                                        "type": "string"
+                                    },
+                                    "status_kehadiran": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden - not owner"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Kinerja Harian"
+                ],
+                "summary": "Delete Kinerja Harian",
+                "operationId": "9c952b5e39baf0e65ba433f2c94a2fe1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/periodes": {
+            "get": {
+                "tags": [
+                    "Periode"
+                ],
+                "summary": "Get list of Periode",
+                "operationId": "ab2b4217ed75f5e226c1321ff0e444a4",
+                "responses": {
+                    "200": {
+                        "description": "List of Periode"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Periode"
+                ],
+                "summary": "Create new Periode",
+                "operationId": "e10258e55fa81bda17af0a298c38cd1c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tahun",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "tahun": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Periode created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/periodes/{id}": {
+            "get": {
+                "tags": [
+                    "Periode"
+                ],
+                "summary": "Get specific Periode",
+                "operationId": "e406b3c501e093573847b789de57162d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Periode object"
+                    },
+                    "404": {
+                        "description": "Periode not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Periode"
+                ],
+                "summary": "Update Periode",
+                "operationId": "2dec592ba9fa8b1780192fd7bc66b2df",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "tahun": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Periode updated successfully"
+                    },
+                    "404": {
+                        "description": "Periode not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Periode"
+                ],
+                "summary": "Delete Periode",
+                "operationId": "b177c9df6a0a065c97667a7953879e7b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Periode deleted successfully"
+                    },
+                    "404": {
+                        "description": "Periode not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/perkins": {
+            "get": {
+                "tags": [
+                    "Perkin"
+                ],
+                "summary": "Get list of Perkin",
+                "operationId": "47fe43230504b6aed6587cd29e71bc85",
+                "responses": {
+                    "200": {
+                        "description": "List of Perkin"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Perkin"
+                ],
+                "summary": "Create new Perkin",
+                "operationId": "158f1c33ea759242b4f59ce90bb7a471",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nama_perkin",
+                                    "id_periode"
+                                ],
+                                "properties": {
+                                    "nama_perkin": {
+                                        "type": "string"
+                                    },
+                                    "no_sk": {
+                                        "type": "string"
+                                    },
+                                    "id_periode": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Perkin created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/perkins/{id}": {
+            "put": {
+                "tags": [
+                    "Perkin"
+                ],
+                "summary": "Update Perkin",
+                "operationId": "d821a4629ccb0c3c6d20ed35b0aa8987",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nama_perkin": {
+                                        "type": "string"
+                                    },
+                                    "no_sk": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Perkin updated successfully"
+                    },
+                    "404": {
+                        "description": "Perkin not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Perkin"
+                ],
+                "summary": "Delete Perkin",
+                "operationId": "9c5eabff1813651368340aa69eba150e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Perkin deleted successfully"
+                    },
+                    "404": {
+                        "description": "Perkin not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/perkins/{id}/assign-satker": {
+            "post": {
+                "tags": [
+                    "Perkin"
+                ],
+                "summary": "Assign Perkin to Satker",
+                "operationId": "ef3c61f1e8b9b89a64a8c91a4f2a130d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_satkers"
+                                ],
+                                "properties": {
+                                    "id_satkers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Assigned successfully"
+                    },
+                    "404": {
+                        "description": "Perkin not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/perkins/import": {
+            "post": {
+                "tags": [
+                    "Perkin"
+                ],
+                "summary": "Import Perkin and IKSK from Excel",
+                "operationId": "b0413dabb5c2bcca9925b74f5b87c328",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "id_periode": {
+                                        "description": "ID of the associated Period",
+                                        "type": "integer"
+                                    },
+                                    "file": {
+                                        "description": "Excel File (.xlsx, .csv)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Import successful"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/satkers": {
+            "get": {
+                "tags": [
+                    "Satker"
+                ],
+                "summary": "Get list of Satker",
+                "operationId": "0dcc488d4e2c4eba58e423c2cf0897c9",
+                "responses": {
+                    "200": {
+                        "description": "List of Satker"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Satker"
+                ],
+                "summary": "Create new Satker",
+                "operationId": "98e34dec8725800ad2b0acbfe927b578",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nama_satker"
+                                ],
+                                "properties": {
+                                    "nama_satker": {
+                                        "type": "string"
+                                    },
+                                    "id_pimpinan": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Satker created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/satkers/{id}": {
+            "put": {
+                "tags": [
+                    "Satker"
+                ],
+                "summary": "Update Satker",
+                "operationId": "2484b78d325d2c4e130e8f3c1557f2f5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nama_satker": {
+                                        "type": "string"
+                                    },
+                                    "id_pimpinan": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Satker updated successfully"
+                    },
+                    "404": {
+                        "description": "Satker not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Satker"
+                ],
+                "summary": "Delete Satker",
+                "operationId": "f97c526dd8e21b8a5aa5499f3c8cfb7d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Satker deleted successfully"
+                    },
+                    "404": {
+                        "description": "Satker not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get list of users",
+                "operationId": "566aed8efb436ca506e0ef51a032ecd9",
+                "responses": {
+                    "200": {
+                        "description": "List of users"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create new user",
+                "operationId": "be551c1d694a01c164966f58bfa77013",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nama",
+                                    "nip"
+                                ],
+                                "properties": {
+                                    "nama": {
+                                        "type": "string"
+                                    },
+                                    "nip": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "role": {
+                                        "description": "ADMIN/OPERATOR/USER/PIMPINAN",
+                                        "type": "string"
+                                    },
+                                    "id_satker": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}": {
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "operationId": "070e37fc9aff78ae73860751bc990ed3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nama": {
+                                        "type": "string"
+                                    },
+                                    "nip": {
+                                        "type": "string"
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user",
+                "operationId": "0b4133ed462528a5e648b88ead11e929",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Login with email and password to get the authentication token",
+                "name": "Token based Based",
+                "in": "header",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "Dashboard Pimpinan",
+            "description": "Dashboard Pimpinan"
+        },
+        {
+            "name": "IKSK",
+            "description": "IKSK"
+        },
+        {
+            "name": "Kinerja Harian",
+            "description": "Kinerja Harian"
+        },
+        {
+            "name": "Periode",
+            "description": "Periode"
+        },
+        {
+            "name": "Perkin",
+            "description": "Perkin"
+        },
+        {
+            "name": "Satker",
+            "description": "Satker"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
+        }
+    ]
+}

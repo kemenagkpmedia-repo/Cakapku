@@ -1,46 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { usePerkinStore } from '../../store/perkinStore';
 import { useSatkerStore } from '../../store/satkerStore';
-import { Building, Check, Save, AlertCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Building, Check, Save, AlertCircle, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export const ManajemenPerkinSatker: React.FC = () => {
-  const { perkins, setPerkins } = usePerkinStore();
-  const { satkers } = useSatkerStore();
-  const [selectedPerkinId, setSelectedPerkinId] = useState<string | number | null>(null);
+  const { perkins, isLoadingPerkins, fetchPerkins, assignSatker } = usePerkinStore();
+  const { satkers, isLoading: isLoadingSatkers, fetchSatkers } = useSatkerStore();
+  const [selectedPerkinId, setSelectedPerkinId] = useState<number | null>(null);
   const [tempSatkerIds, setTempSatkerIds] = useState<number[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSelectPerkin = (id: string | number) => {
+  useEffect(() => {
+    fetchPerkins();
+    fetchSatkers();
+  }, [fetchPerkins, fetchSatkers]);
+
+  const handleSelectPerkin = (id: number) => {
     setSelectedPerkinId(id);
-    const perkin = perkins.find(p => p.id === id);
+    const perkin = perkins.find((p) => p.id === id);
     setTempSatkerIds(perkin?.satker_ids || []);
   };
 
   const toggleSatker = (satkerId: number) => {
-    setTempSatkerIds(prev => 
-      prev.includes(satkerId) 
-        ? prev.filter(id => id !== satkerId) 
-        : [...prev, satkerId]
+    setTempSatkerIds((prev) =>
+      prev.includes(satkerId) ? prev.filter((id) => id !== satkerId) : [...prev, satkerId]
     );
   };
 
-  const handleSave = () => {
-    if (selectedPerkinId === null) return;
-
-    const updatedPerkins = perkins.map(p => 
-      p.id === selectedPerkinId 
-        ? { ...p, satker_ids: tempSatkerIds } 
-        : p
-    );
-
-    setPerkins(updatedPerkins);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+  const handleSave = async () => {
+    if (selectedPerkinId === null || isSaving) return;
+    setIsSaving(true);
+    try {
+      await assignSatker(selectedPerkinId, tempSatkerIds);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal menyimpan plotting Satker.');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const isLoading = isLoadingPerkins || isLoadingSatkers;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[450px] gap-4">
+        <Loader2 className="w-10 h-10 text-accent animate-spin" />
+        <p className="text-sm font-bold text-text-muted uppercase tracking-widest">Memuat Data...</p>
+      </div>
+    );
+  }
 
   if (perkins.length === 0) {
     return (
@@ -50,7 +65,8 @@ export const ManajemenPerkinSatker: React.FC = () => {
         </div>
         <h2 className="text-2xl font-extrabold text-text-header tracking-tight">Belum Ada Data Perkin</h2>
         <p className="text-text-muted mt-3 max-w-md font-medium text-[0.9375rem] leading-relaxed">
-          Sistem belum menemukan data Perjanjian Kinerja. Silakan impor data Perkin terlebih dahulu di menu <span className="text-accent font-bold">Manajemen Perkin</span> sebelum melakukan plotting ke Satker.
+          Sistem belum menemukan data Perjanjian Kinerja. Silakan impor data Perkin terlebih dahulu di menu{' '}
+          <span className="text-accent font-bold">Manajemen Perkin</span> sebelum melakukan plotting ke Satker.
         </p>
       </div>
     );
@@ -62,9 +78,9 @@ export const ManajemenPerkinSatker: React.FC = () => {
         <h1 className="text-3xl font-extrabold text-text-header tracking-tight">Manajemen Perkin Satker</h1>
         <p className="text-sm text-text-muted mt-2 font-medium">Lakukan plotting dan penugasan Sasaran Kegiatan (Perkin) ke masing-masing Satuan Kerja.</p>
       </div>
-      
+
       {showSuccess && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-emerald-50 border border-emerald-100 text-emerald-800 p-4 rounded-2xl flex items-center gap-3 text-sm font-semibold shadow-sm"
@@ -92,26 +108,23 @@ export const ManajemenPerkinSatker: React.FC = () => {
                 transition={{ delay: i * 0.05 }}
                 onClick={() => handleSelectPerkin(perkin.id)}
                 className={cn(
-                  "p-5 rounded-2xl border cursor-pointer transition-all duration-300 group relative overflow-hidden",
+                  'p-5 rounded-2xl border cursor-pointer transition-all duration-300 group relative overflow-hidden',
                   selectedPerkinId === perkin.id
-                    ? "border-accent bg-blue-50/50 shadow-md ring-1 ring-accent/20"
-                    : "border-border bg-white hover:border-accent/40 hover:shadow-lg hover:-translate-y-0.5"
+                    ? 'border-accent bg-blue-50/50 shadow-md ring-1 ring-accent/20'
+                    : 'border-border bg-white hover:border-accent/40 hover:shadow-lg hover:-translate-y-0.5'
                 )}
               >
                 <div className="flex justify-between items-start gap-4 relative z-10">
                   <div className="flex-1">
-                    <span className={cn(
-                      "text-sm font-bold leading-relaxed tracking-tight block transition-colors",
-                      selectedPerkinId === perkin.id ? "text-accent" : "text-text-main group-hover:text-text-header"
-                    )}>
-                      {perkin.name}
+                    <span className={cn('text-sm font-bold leading-relaxed tracking-tight block transition-colors', selectedPerkinId === perkin.id ? 'text-accent' : 'text-text-main group-hover:text-text-header')}>
+                      {perkin.nama_perkin || perkin.name}
                     </span>
                     <div className="flex items-center gap-2 mt-3">
                       <div className="w-4 h-4 rounded bg-slate-100 flex items-center justify-center">
                         <Building className="w-2.5 h-2.5 text-text-muted" />
                       </div>
-                      <span className="text-[0.65rem] font-bold text-text-muted">Target: 
-                        <span className="text-text-main ml-1 uppercase">Satuan Kerja Terpilih</span>
+                      <span className="text-[0.65rem] font-bold text-text-muted">
+                        {perkin.satker_ids?.length || 0} Satker Terpilih
                       </span>
                     </div>
                   </div>
@@ -124,9 +137,7 @@ export const ManajemenPerkinSatker: React.FC = () => {
                     <ChevronRight className="w-4 h-4 text-accent shrink-0 mt-1 animate-bounce-x" />
                   )}
                 </div>
-                {selectedPerkinId === perkin.id && (
-                  <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
-                )}
+                {selectedPerkinId === perkin.id && <div className="absolute top-0 left-0 w-1 h-full bg-accent" />}
               </motion.div>
             ))}
           </div>
@@ -135,11 +146,7 @@ export const ManajemenPerkinSatker: React.FC = () => {
         {/* Satker Plotting */}
         <div className="col-span-12 lg:col-span-7">
           {selectedPerkinId ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
               <Card className="rounded-3xl border-border shadow-elegant overflow-hidden">
                 <CardHeader className="bg-surface border-b border-border px-8 py-6">
                   <CardTitle className="text-base font-extrabold flex items-center gap-3">
@@ -149,7 +156,7 @@ export const ManajemenPerkinSatker: React.FC = () => {
                     <div>
                       <span className="block text-[0.65rem] text-text-muted uppercase tracking-widest font-bold mb-1">Konfigurasi Plotting</span>
                       <span className="text-text-header line-clamp-1 tracking-tight">
-                        {perkins.find(p => p.id === selectedPerkinId)?.name}
+                        {perkins.find((p) => p.id === selectedPerkinId)?.nama_perkin || perkins.find((p) => p.id === selectedPerkinId)?.name}
                       </span>
                     </div>
                   </CardTitle>
@@ -157,44 +164,56 @@ export const ManajemenPerkinSatker: React.FC = () => {
                 <CardContent className="p-8">
                   <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-8 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                    <p className="text-[0.8125rem] text-text-muted font-medium leading-relaxed italic">Aktifkan kotak centang di bawah untuk memberikan akses atau menugaskan Sasaran Kegiatan ini ke Satuan Kerja (Unit) yang relevan.</p>
+                    <p className="text-[0.8125rem] text-text-muted font-medium leading-relaxed italic">
+                      Aktifkan kotak centang di bawah untuk memberikan akses atau menugaskan Sasaran Kegiatan ini ke Satuan Kerja yang relevan.
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {satkers.map((satker) => {
-                      const isSelected = tempSatkerIds.includes(satker.id);
-                      return (
-                        <div
-                          key={satker.id}
-                          onClick={() => toggleSatker(satker.id)}
-                          className={cn(
-                            "flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all duration-300 group",
-                            isSelected
-                              ? "border-accent bg-accent/5 ring-1 ring-accent/10"
-                              : "border-border bg-white text-text-main hover:border-accent/30 hover:bg-slate-50"
-                          )}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={cn(
-                              "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500",
-                              isSelected ? "bg-accent text-white rotate-6 scale-110 shadow-lg shadow-accent/20" : "bg-slate-50 text-text-muted group-hover:bg-white border border-transparent group-hover:border-border"
-                            )}>
-                              <Building className="w-4 h-4" />
+                  {satkers.length === 0 ? (
+                    <div className="p-8 text-center text-text-muted font-medium">
+                      Belum ada data Satker. Tambahkan Satker di menu Manajemen Satker.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {satkers.map((satker) => {
+                        const isSelected = tempSatkerIds.includes(satker.id);
+                        return (
+                          <div
+                            key={satker.id}
+                            onClick={() => toggleSatker(satker.id)}
+                            className={cn(
+                              'flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all duration-300 group',
+                              isSelected
+                                ? 'border-accent bg-accent/5 ring-1 ring-accent/10'
+                                : 'border-border bg-white text-text-main hover:border-accent/30 hover:bg-slate-50'
+                            )}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500', isSelected ? 'bg-accent text-white rotate-6 scale-110 shadow-lg shadow-accent/20' : 'bg-slate-50 text-text-muted group-hover:bg-white border border-transparent group-hover:border-border')}>
+                                <Building className="w-4 h-4" />
+                              </div>
+                              <span className={cn('text-sm font-bold tracking-tight', isSelected ? 'text-accent' : 'text-text-main')}>
+                                {satker.nama_satker || satker.name}
+                              </span>
                             </div>
-                            <span className={cn("text-sm font-bold tracking-tight", isSelected ? "text-accent" : "text-text-main")}>{satker.name}</span>
+                            {isSelected && <CheckCircle2 className="w-5 h-5 text-accent animate-in zoom-in-50 duration-300" />}
                           </div>
-                          {isSelected && <CheckCircle2 className="w-5 h-5 text-accent animate-in zoom-in-50 duration-300" />}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <div className="mt-12 pt-8 border-t border-border flex justify-end">
-                    <Button 
-                      onClick={handleSave} 
+                    <Button
+                      onClick={handleSave}
+                      disabled={isSaving}
                       className="rounded-2xl flex gap-2 font-bold uppercase tracking-widest text-[0.7rem] px-10 h-12 shadow-lg shadow-accent/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                     >
-                      <Save className="w-4 h-4" />
-                      Simpan Plotting Satker
+                      {isSaving ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+                      ) : (
+                        <><Save className="w-4 h-4" /> Simpan Plotting Satker</>
+                      )}
                     </Button>
                   </div>
                 </CardContent>

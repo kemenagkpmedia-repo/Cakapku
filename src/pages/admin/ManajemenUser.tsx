@@ -17,7 +17,7 @@ import { cn } from '../../utils/cn';
 
 export const ManajemenUser: React.FC = () => {
   const { users, isLoading, fetchUsers, addUser, addUsers, updateUser, deleteUser } = useUserStore();
-  const { satkers } = useSatkerStore();
+  const { satkers, fetchSatkers } = useSatkerStore();
   const { logout, loginAs } = useAuthStore();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,31 +27,65 @@ export const ManajemenUser: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchSatkers();
+  }, [fetchUsers, fetchSatkers]);
 
 
   const [formData, setFormData] = useState({
-    name: '',
+    nama: '',
+    username: '',
+    password: '',
     email: '',
-    role: 'user' as Role,
+    role: 'USER' as Role,
     id_satker: '',
     nip: '',
     jabatan: '',
     gol_ruang: '',
   });
 
-  const filteredUsers = users.filter(u => 
+  console.log(formData)
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  const filteredUsers = users.filter(u =>
     (u.nama || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.nip?.toLowerCase().includes(searchQuery.toLowerCase())
+    (u.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.nip || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Reset ke halaman 1 setiap kali pencarian berubah
+  const handleSearch = (q: string) => {
+    setSearchQuery(q);
+    setCurrentPage(1);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+  // Buat array nomor halaman yang ditampilkan (max 5 angka)
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range: number[] = [];
+    for (
+      let i = Math.max(1, currentPage - delta);
+      i <= Math.min(totalPages, currentPage + delta);
+      i++
+    ) range.push(i);
+    return range;
+  };
 
   const resetForm = () => {
     setFormData({
-      name: '',
+      nama: '',
+      username: '',
+      password: '',
       email: '',
       role: 'user',
       id_satker: '',
@@ -63,26 +97,58 @@ export const ManajemenUser: React.FC = () => {
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.email) {
+    if (!formData.nama.trim() || !formData.nip.trim()) {
+      alert('Nama dan NIP wajib diisi.');
+      return;
+    }
+    try {
       await addUser({
         ...formData,
-        id_satker: formData.id_satker ? Number(formData.id_satker) : undefined
+        // username default ke NIP jika kosong
+        username: formData.username.trim() || formData.nip.trim(),
+        // password default ke NIP jika kosong
+        password: formData.password.trim() || formData.nip.trim(),
+        id_satker: formData.id_satker ? Number(formData.id_satker) : undefined,
       });
       resetForm();
       setIsAddModalOpen(false);
+    } catch (err: any) {
+      const errors = err.response?.data?.errors;
+      if (errors) {
+        const msgs = Object.values(errors).flat().join('\n');
+        alert('Validasi gagal:\n' + msgs);
+      } else {
+        alert(err.response?.data?.message || 'Gagal menambah user.');
+      }
     }
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUser && formData.name && formData.email) {
+    if (!selectedUser || !formData.nama.trim()) {
+      alert('Nama wajib diisi.');
+      return;
+    }
+    try {
       await updateUser(selectedUser.id, {
-        ...formData,
-        id_satker: formData.id_satker ? Number(formData.id_satker) : undefined
+        nama: formData.nama,
+        nip: formData.nip,
+        role: formData.role,
+        id_satker: formData.id_satker ? Number(formData.id_satker) : undefined,
+        jabatan: formData.jabatan,
+        gol_ruang: formData.gol_ruang,
       });
       resetForm();
       setSelectedUser(null);
       setIsEditModalOpen(false);
+    } catch (err: any) {
+      const errors = err.response?.data?.errors;
+      if (errors) {
+        const msgs = Object.values(errors).flat().join('\n');
+        alert('Validasi gagal:\n' + msgs);
+      } else {
+        alert(err.response?.data?.message || 'Gagal mengubah user.');
+      }
     }
   };
 
@@ -134,12 +200,12 @@ export const ManajemenUser: React.FC = () => {
   };
 
   const getSatkerName = (id?: number) => {
-    return satkers.find(s => s.id === id)?.name || '-';
+    return satkers.find(s => s.id === id)?.nama_satker || satkers.find(s => s.id === id)?.name || '-';
   };
 
   const handleLoginAs = (user: any) => {
     loginAs(user);
-    
+
     // Redirect based on the impersonated user's role
     switch (user.role) {
       case 'admin': navigate('/admin/users'); break;
@@ -168,21 +234,21 @@ export const ManajemenUser: React.FC = () => {
           transition={{ duration: 0.4 }}
           className="flex flex-wrap gap-3"
         >
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={downloadTemplate}
             className="rounded-xl h-10 px-4 font-bold uppercase tracking-widest text-[0.65rem] border-border text-text-main hover:bg-slate-50"
           >
             <FileDown className="w-4 h-4 mr-2" /> Template
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setIsImportModalOpen(true)}
             className="rounded-xl h-10 px-4 font-bold uppercase tracking-widest text-[0.65rem] border-border text-accent hover:bg-accent/5"
           >
             <FileUp className="w-4 h-4 mr-2" /> Import Excel
           </Button>
-          <Button 
+          <Button
             onClick={() => {
               resetForm();
               setIsAddModalOpen(true);
@@ -199,15 +265,20 @@ export const ManajemenUser: React.FC = () => {
           <div className="p-6 border-b border-border bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative group w-full md:w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-accent transition-colors" />
-              <Input 
-                placeholder="Cari nama, email, atau NIP..." 
+              <Input
+                placeholder="Cari nama, email, atau NIP..."
                 className="pl-11 h-11 rounded-xl bg-white border-border shadow-none focus:ring-accent/10 transition-all font-medium py-0"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            <div className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest bg-white px-4 py-2 rounded-lg border border-border">
-              Total: <span className="text-accent">{filteredUsers.length} Users</span>
+            <div className="flex items-center gap-3">
+              <div className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest bg-white px-4 py-2 rounded-lg border border-border">
+                Total: <span className="text-accent">{filteredUsers.length} Users</span>
+              </div>
+              <div className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest bg-white px-4 py-2 rounded-lg border border-border">
+                Hal. <span className="text-accent">{currentPage}/{totalPages}</span>
+              </div>
             </div>
           </div>
 
@@ -221,26 +292,42 @@ export const ManajemenUser: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-border">
-                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest w-24 text-center">ID User</th>
+                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest w-16 text-center">ID</th>
                     <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Identitas Pegawai</th>
-                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Akses & Satker</th>
+                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Jabatan &amp; Gol. Ruang</th>
+                    <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest">Akses &amp; Satker</th>
                     <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filteredUsers.map((user) => (
+                  {paginatedUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50/80 transition-colors group">
                       <td className="px-6 py-5 text-center text-sm font-black text-accent">{user.id}</td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent font-black text-sm shrink-0">
-                            {(user.nama).charAt(0).toUpperCase()}
+                            {(user.nama || user.name || '?').charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-extrabold text-text-header tracking-tight">{user.nama}</div>
+                            <div className="font-extrabold text-text-header tracking-tight">{user.nama || user.name}</div>
                             <div className="text-[0.75rem] text-text-muted font-medium mt-0.5">{user.email}</div>
-                            <div className="text-[0.65rem] text-accent font-bold mt-1 uppercase tracking-wider">{user.nip || 'NIP Belum Diatur'}</div>
+                            <div className="text-[0.65rem] text-accent font-bold mt-1 uppercase tracking-wider">{user.nip || '— NIP Belum Diatur —'}</div>
                           </div>
+                        </div>
+                      </td>
+                      {/* Jabatan & Gol. Ruang */}
+                      <td className="px-6 py-5">
+                        <div className="space-y-1.5">
+                          <div className="text-[0.8125rem] font-bold text-text-main">
+                            {user.jabatan || <span className="text-text-muted italic text-[0.75rem]">— Belum Diatur —</span>}
+                          </div>
+                          {user.gol_ruang ? (
+                            <div className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 text-[0.65rem] font-black uppercase tracking-wider">
+                              {user.gol_ruang}
+                            </div>
+                          ) : (
+                            <div className="text-[0.65rem] text-text-muted font-medium italic">Gol. Belum Diatur</div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -257,23 +344,26 @@ export const ManajemenUser: React.FC = () => {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-end gap-1.5 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                          <button 
+                          <button
                             onClick={() => handleLoginAs(user)}
                             title="Login As"
                             className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
                           >
                             <LogIn className="w-4.5 h-4.5" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => {
                               setSelectedUser(user);
                               setFormData({
-                                name: user.nama,
-                                email: user.email,
+                                nama: user.nama || '',
+                                username: '',
+                                password: '',
+                                email: user.email || '',
                                 role: user.role,
-                                id_satker: user.id_satker?.toString() || '',
+                                id_satker: (user.id_satker ?? user.satker_id)?.toString() || '',
                                 nip: user.nip || '',
-                                jabatan: user.jabatan || ''
+                                jabatan: user.jabatan || '',
+                                gol_ruang: user.gol_ruang || '',
                               });
                               setIsEditModalOpen(true);
                             }}
@@ -281,7 +371,7 @@ export const ManajemenUser: React.FC = () => {
                           >
                             <Edit3 className="w-4.5 h-4.5" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => {
                               setSelectedUser(user);
                               setIsDeleteModalOpen(true);
@@ -298,7 +388,7 @@ export const ManajemenUser: React.FC = () => {
               </table>
             )}
           </div>
-          
+
           {filteredUsers.length === 0 && (
             <div className="p-20 text-center flex flex-col items-center justify-center">
               <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
@@ -306,6 +396,72 @@ export const ManajemenUser: React.FC = () => {
               </div>
               <h3 className="font-bold text-text-header uppercase tracking-widest text-xs">Pencarian Tidak Ditemukan</h3>
               <p className="text-[0.8rem] text-text-muted mt-2">Coba kata kunci lain atau periksa filter Anda</p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {filteredUsers.length > 0 && (
+            <div className="px-6 py-5 border-t border-border bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Info */}
+              <p className="text-[0.75rem] font-bold text-text-muted">
+                Menampilkan{' '}
+                <span className="text-text-header">{Math.min((currentPage - 1) * PAGE_SIZE + 1, filteredUsers.length)}</span>
+                {' '}–{' '}
+                <span className="text-text-header">{Math.min(currentPage * PAGE_SIZE, filteredUsers.length)}</span>
+                {' '}dari{' '}
+                <span className="text-accent font-black">{filteredUsers.length}</span> pegawai
+              </p>
+
+              {/* Tombol Navigasi */}
+              <div className="flex items-center gap-1.5">
+                {/* Prev */}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-white text-text-muted font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-accent hover:text-accent hover:bg-accent/5 transition-all"
+                >
+                  ‹
+                </button>
+
+                {/* Halaman pertama + ellipsis */}
+                {getPageNumbers()[0] > 1 && (
+                  <>
+                    <button onClick={() => setCurrentPage(1)} className="w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-white text-text-muted text-sm font-bold hover:border-accent hover:text-accent hover:bg-accent/5 transition-all">1</button>
+                    {getPageNumbers()[0] > 2 && <span className="w-9 h-9 flex items-center justify-center text-text-muted text-sm">…</span>}
+                  </>
+                )}
+
+                {/* Nomor halaman */}
+                {getPageNumbers().map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-9 h-9 flex items-center justify-center rounded-xl border text-sm font-bold transition-all ${page === currentPage
+                        ? 'bg-accent border-accent text-white shadow-lg shadow-accent/25'
+                        : 'border-border bg-white text-text-muted hover:border-accent hover:text-accent hover:bg-accent/5'
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Ellipsis + halaman terakhir */}
+                {getPageNumbers()[getPageNumbers().length - 1] < totalPages && (
+                  <>
+                    {getPageNumbers()[getPageNumbers().length - 1] < totalPages - 1 && <span className="w-9 h-9 flex items-center justify-center text-text-muted text-sm">…</span>}
+                    <button onClick={() => setCurrentPage(totalPages)} className="w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-white text-text-muted text-sm font-bold hover:border-accent hover:text-accent hover:bg-accent/5 transition-all">{totalPages}</button>
+                  </>
+                )}
+
+                {/* Next */}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-white text-text-muted font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-accent hover:text-accent hover:bg-accent/5 transition-all"
+                >
+                  ›
+                </button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -318,22 +474,39 @@ export const ManajemenUser: React.FC = () => {
         title="Tambah Akun Pegawai"
       >
         <form onSubmit={handleAddSubmit} className="space-y-5 pt-4">
+          {/* Row 1: Nama + NIP */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Nama Lengkap</Label>
-              <Input placeholder="Nama lengkapi..." value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-12 rounded-xl" autoFocus />
+              <Label>Nama Lengkap <span className="text-rose-500">*</span></Label>
+              <Input placeholder="Nama lengkap pegawai..." value={formData.nama} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} className="h-12 rounded-xl" autoFocus required />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" placeholder="email@instansi.go.id" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="h-12 rounded-xl" />
+              <Label>NIP <span className="text-rose-500">*</span></Label>
+              <Input placeholder="19XXXXXXXXXXXX" value={formData.nip} onChange={(e) => setFormData({ ...formData, nip: e.target.value })} className="h-12 rounded-xl" required />
             </div>
           </div>
+          {/* Row 2: Username + Password */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label>Username <span className="text-text-muted text-[0.65rem]">(kosong = pakai NIP)</span></Label>
+              <Input placeholder="Default: NIP" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} className="h-12 rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label>Password <span className="text-text-muted text-[0.65rem]">(kosong = pakai NIP)</span></Label>
+              <Input type="password" placeholder="Default: NIP" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="h-12 rounded-xl" />
+            </div>
+          </div>
+          {/* Row 3: Email + Role */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" placeholder="email@instansi.go.id" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-12 rounded-xl" />
+            </div>
+            <div className="space-y-2">
               <Label>Role Akses</Label>
-              <Select 
-                value={formData.role} 
-                onChange={(e) => setFormData({...formData, role: e.target.value as Role})}
+              <Select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
                 options={[
                   { label: 'User', value: 'user' },
                   { label: 'Operator', value: 'operator' },
@@ -343,27 +516,58 @@ export const ManajemenUser: React.FC = () => {
                 className="h-12"
               />
             </div>
+          </div>
+          {/* Row 4: Satker + Jabatan */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Satker</Label>
-              <Select 
-                value={formData.id_satker} 
-                onChange={(e) => setFormData({...formData, id_satker: e.target.value})}
+              <Select
+                value={formData.id_satker}
+                onChange={(e) => setFormData({ ...formData, id_satker: e.target.value })}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
-                  ...satkers.map(s => ({ label: s.name, value: s.id.toString() }))
+                  ...satkers.map(s => ({ label: s.nama_satker || s.name || '', value: s.id.toString() }))
                 ]}
                 className="h-12"
               />
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>NIP</Label>
-              <Input placeholder="19XXXXXXXXXXXX" value={formData.nip} onChange={(e) => setFormData({...formData, nip: e.target.value})} className="h-12 rounded-xl" />
-            </div>
             <div className="space-y-2">
               <Label>Jabatan</Label>
-              <Input placeholder="Kepala Seksi / Staf..." value={formData.jabatan} onChange={(e) => setFormData({...formData, jabatan: e.target.value})} className="h-12 rounded-xl" />
+              <Input placeholder="Kepala Seksi / Staf..." value={formData.jabatan} onChange={(e) => setFormData({ ...formData, jabatan: e.target.value })} className="h-12 rounded-xl" />
+            </div>
+          </div>
+          {/* Row 5: Golongan Ruang */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Golongan Ruang</Label>
+              <Select
+                value={formData.gol_ruang}
+                onChange={(e) => setFormData({ ...formData, gol_ruang: e.target.value })}
+                options={[
+                  { label: '-- Pilih Golongan --', value: '' },
+                  { label: '── PNS Golongan II ──', value: '', disabled: true },
+                  { label: 'II/a - Pengatur Muda', value: 'II/a' },
+                  { label: 'II/b - Pengatur Muda Tk.I', value: 'II/b' },
+                  { label: 'II/c - Pengatur', value: 'II/c' },
+                  { label: 'II/d - Pengatur Tk.I', value: 'II/d' },
+                  { label: '── PNS Golongan III ──', value: '', disabled: true },
+                  { label: 'III/a - Penata Muda', value: 'III/a' },
+                  { label: 'III/b - Penata Muda Tk.I', value: 'III/b' },
+                  { label: 'III/c - Penata', value: 'III/c' },
+                  { label: 'III/d - Penata Tk.I', value: 'III/d' },
+                  { label: '── PNS Golongan IV ──', value: '', disabled: true },
+                  { label: 'IV/a - Pembina', value: 'IV/a' },
+                  { label: 'IV/b - Pembina Tk.I', value: 'IV/b' },
+                  { label: 'IV/c - Pembina Utama Muda', value: 'IV/c' },
+                  { label: 'IV/d - Pembina Utama Madya', value: 'IV/d' },
+                  { label: '── PPPK ──', value: '', disabled: true },
+                  { label: 'PPPK III', value: 'PPPK III' },
+                  { label: 'PPPK V', value: 'PPPK V' },
+                  { label: 'PPPK VII', value: 'PPPK VII' },
+                  { label: 'PPPK IX', value: 'PPPK IX' },
+                ]}
+                className="h-12"
+              />
             </div>
           </div>
           <div className="flex gap-3 pt-4">
@@ -382,20 +586,24 @@ export const ManajemenUser: React.FC = () => {
         <form onSubmit={handleEditSubmit} className="space-y-5 pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Nama Lengkap</Label>
-              <Input value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="h-12 rounded-xl" />
+              <Label>Nama Lengkap <span className="text-rose-500">*</span></Label>
+              <Input value={formData.nama} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} className="h-12 rounded-xl" required />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="h-12 rounded-xl" />
+              <Label>NIP</Label>
+              <Input value={formData.nip} onChange={(e) => setFormData({ ...formData, nip: e.target.value })} className="h-12 rounded-xl" />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-12 rounded-xl" />
+            </div>
+            <div className="space-y-2">
               <Label>Role Akses</Label>
-              <Select 
-                value={formData.role} 
-                onChange={(e) => setFormData({...formData, role: e.target.value as Role})}
+              <Select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
                 options={[
                   { label: 'User', value: 'user' },
                   { label: 'Operator', value: 'operator' },
@@ -405,27 +613,57 @@ export const ManajemenUser: React.FC = () => {
                 className="h-12"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Satker</Label>
-              <Select 
-                value={formData.id_satker} 
-                onChange={(e) => setFormData({...formData, id_satker: e.target.value})}
+              <Select
+                value={formData.id_satker}
+                onChange={(e) => setFormData({ ...formData, id_satker: e.target.value })}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
-                  ...satkers.map(s => ({ label: s.name, value: s.id.toString() }))
+                  ...satkers.map(s => ({ label: s.nama_satker || s.name || '', value: s.id.toString() }))
                 ]}
                 className="h-12"
               />
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>NIP</Label>
-              <Input value={formData.nip} onChange={(e) => setFormData({...formData, nip: e.target.value})} className="h-12 rounded-xl" />
-            </div>
             <div className="space-y-2">
               <Label>Jabatan</Label>
-              <Input value={formData.jabatan} onChange={(e) => setFormData({...formData, jabatan: e.target.value})} className="h-12 rounded-xl" />
+              <Input value={formData.jabatan} onChange={(e) => setFormData({ ...formData, jabatan: e.target.value })} className="h-12 rounded-xl" />
+            </div>
+          </div>
+          {/* Golongan Ruang Edit */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Golongan Ruang</Label>
+              <Select
+                value={formData.gol_ruang}
+                onChange={(e) => setFormData({ ...formData, gol_ruang: e.target.value })}
+                options={[
+                  { label: '-- Pilih Golongan --', value: '' },
+                  { label: '── PNS Golongan II ──', value: '', disabled: true },
+                  { label: 'II/a - Pengatur Muda', value: 'II/a' },
+                  { label: 'II/b - Pengatur Muda Tk.I', value: 'II/b' },
+                  { label: 'II/c - Pengatur', value: 'II/c' },
+                  { label: 'II/d - Pengatur Tk.I', value: 'II/d' },
+                  { label: '── PNS Golongan III ──', value: '', disabled: true },
+                  { label: 'III/a - Penata Muda', value: 'III/a' },
+                  { label: 'III/b - Penata Muda Tk.I', value: 'III/b' },
+                  { label: 'III/c - Penata', value: 'III/c' },
+                  { label: 'III/d - Penata Tk.I', value: 'III/d' },
+                  { label: '── PNS Golongan IV ──', value: '', disabled: true },
+                  { label: 'IV/a - Pembina', value: 'IV/a' },
+                  { label: 'IV/b - Pembina Tk.I', value: 'IV/b' },
+                  { label: 'IV/c - Pembina Utama Muda', value: 'IV/c' },
+                  { label: 'IV/d - Pembina Utama Madya', value: 'IV/d' },
+                  { label: '── PPPK ──', value: '', disabled: true },
+                  { label: 'PPPK III', value: 'PPPK III' },
+                  { label: 'PPPK V', value: 'PPPK V' },
+                  { label: 'PPPK VII', value: 'PPPK VII' },
+                  { label: 'PPPK IX', value: 'PPPK IX' },
+                ]}
+                className="h-12"
+              />
             </div>
           </div>
           <div className="flex gap-3 pt-4">
@@ -450,24 +688,24 @@ export const ManajemenUser: React.FC = () => {
               <p className="text-sm font-bold text-text-header tracking-tight">Upload File Excel</p>
               <p className="text-xs text-text-muted mt-1 font-medium italic">Gunakan template yang telah disediakan</p>
             </div>
-            <input 
-              type="file" 
-              accept=".xlsx, .xls" 
-              className="hidden" 
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              className="hidden"
               ref={fileInputRef}
               onChange={handleImport}
             />
-            <Button 
+            <Button
               onClick={() => fileInputRef.current?.click()}
               className="mt-2 rounded-xl px-8 h-12 font-bold uppercase tracking-widest text-[0.7rem]"
             >
               Pilih File
             </Button>
           </div>
-          
+
           <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 flex items-start gap-4">
             <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0 border border-amber-200">
-               <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
               <p className="text-[0.7rem] font-black text-amber-800 uppercase tracking-[0.1em]">Peringatan</p>

@@ -11,103 +11,104 @@ import { usePerkinStore } from '../../store/perkinStore';
 import { useAuthStore } from '../../store/authStore';
 import { useKinerjaStore } from '../../store/kinerjaStore';
 import { Modal } from '../../components/ui/Modal';
-import { AlertCircle, CheckCircle, CheckSquare, Clock, Trash2, Edit3, FileText, PartyPopper } from 'lucide-react';
+import { AlertCircle, CheckCircle, Edit3, FileText, PartyPopper, Loader2 } from 'lucide-react';
 
 export const InputKinerja: React.FC = () => {
-  const { getFilteredPerkins } = usePerkinStore();
+  const { perkins, iksks, fetchPerkins, fetchIksks, getFilteredPerkins } = usePerkinStore();
   const { user } = useAuthStore();
-  const { records, addRecord, updateRecord, setEditingId, editingId } = useKinerjaStore();
+  const { addRecord, updateRecord, setEditingId, editingId, fetchKinerja, records } = useKinerjaStore();
   const navigate = useNavigate();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm();
-  const [ikskOptions, setIkskOptions] = useState<{id: string | number, name: string}[]>([]);
+  const [ikskOptions, setIkskOptions] = useState<{ id: number; indikator: string; target_vol?: string; target_satuan?: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
 
-  // Filter perkins based on user's satker_id and ACTIVE periods
-  const filteredPerkins = getFilteredPerkins().filter(p => 
-    p.satker_ids && user?.satker_id ? p.satker_ids.includes(user.satker_id) : false
+  // Load data dari API saat mount
+  useEffect(() => {
+    fetchPerkins();
+    fetchIksks();
+    fetchKinerja();
+  }, [fetchPerkins, fetchIksks, fetchKinerja]);
+
+  // Filter perkins berdasarkan satker user dan periode aktif
+  const filteredPerkins = getFilteredPerkins().filter((p) =>
+    p.satker_ids && user?.id_satker ? p.satker_ids.includes(user.id_satker) : false
   );
 
   const selectedPerkinId = watch('perkin_id');
 
-  // Dependent Dropdown Logic
+  // Dependent dropdown: IKSK berdasarkan perkin yang dipilih
   useEffect(() => {
     if (selectedPerkinId) {
-      const perkin = filteredPerkins.find(p => String(p.id) === String(selectedPerkinId));
-      setIkskOptions(perkin?.iksk || []);
+      const perkin = filteredPerkins.find((p) => String(p.id) === String(selectedPerkinId));
+      const perkinIksks = perkin?.iksk || perkin?.iksks || [];
+      setIkskOptions(perkinIksks as any);
     } else {
       setIkskOptions([]);
     }
-  }, [selectedPerkinId, filteredPerkins]);
+  }, [selectedPerkinId, perkins]);
 
   const selectedIkskId = watch('iksk_id');
 
-  // Auto-fill volume and satuan from selected IKSK
+  // Auto-fill volume dan satuan dari IKSK yang dipilih
   useEffect(() => {
     if (selectedIkskId && ikskOptions.length > 0) {
-      const selectedIksk = ikskOptions.find(i => String(i.id) === String(selectedIkskId));
+      const selectedIksk = ikskOptions.find((i) => String(i.id) === String(selectedIkskId));
       if (selectedIksk && !editingId) {
-        // Only auto-fill if not editing, or if specifically needed
-        setValue('volume', (selectedIksk as any).target_vol);
-        setValue('satuan', (selectedIksk as any).target_satuan);
+        setValue('volume', selectedIksk.target_vol || '');
+        setValue('satuan', selectedIksk.target_satuan || '');
       }
     }
   }, [selectedIkskId, ikskOptions, setValue, editingId]);
 
-  // Populate form when editingId changes (arriving from history page)
+  // Isi form saat edit
   useEffect(() => {
     if (editingId) {
-      const record = records.find(r => r.id === editingId);
+      const record = records.find((r) => r.id === editingId);
       if (record) {
         setValue('tanggal', record.tanggal);
-        setValue('perkin_id', record.perkin_id);
-        // Important: Use individual setters for time-dependent fields
-        setTimeout(() => {
-          setValue('iksk_id', record.iksk_id);
-          setValue('volume', record.volume);
-          setValue('satuan', record.satuan);
-        }, 100);
-        setValue('uraian_pekerjaan', record.uraian_pekerjaan);
+        setValue('perkin_id', record.perkin_id || record.iksk?.perkin?.id);
         setValue('status_kehadiran', record.status_kehadiran);
+        setValue('uraian_pekerjaan', record.uraian_pekerjaan);
+        setTimeout(() => {
+          setValue('iksk_id', record.id_iksk || record.iksk_id);
+          setValue('volume', record.volume || record.iksk?.target_vol);
+          setValue('satuan', record.satuan || record.iksk?.target_satuan);
+        }, 100);
       }
     }
   }, [editingId, records, setValue]);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const perkin = filteredPerkins.find(p => String(p.id) === String(data.perkin_id));
-    const iksk = ikskOptions.find(i => String(i.id) === String(data.iksk_id));
-    
-    const recordData = {
-      ...data,
-      perkin_name: perkin?.name || 'Unknown Perkin',
-      iksk_name: iksk?.name || 'Unknown IKSK',
-      volume: Number(data.volume),
-      userName: user?.name || 'Unknown User',
-      userNip: user?.nip,
-      satker_id: user?.satker_id
-    };
+    try {
+      const payload = {
+        tanggal: data.tanggal,
+        id_iksk: Number(data.iksk_id),
+        uraian_pekerjaan: data.uraian_pekerjaan,
+        status_kehadiran: data.status_kehadiran,
+      };
 
-    if (editingId) {
-      updateRecord(editingId, recordData);
-      setEditingId(null);
-    } else {
-      addRecord(recordData);
+      if (editingId) {
+        await updateRecord(editingId, {
+          uraian_pekerjaan: payload.uraian_pekerjaan,
+          status_kehadiran: payload.status_kehadiran,
+        });
+        setEditingId(null);
+      } else {
+        await addRecord(payload);
+      }
+
+      setSuccessModalOpen(true);
+      reset();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Gagal menyimpan laporan kinerja.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setShowSuccess(true);
-    setSuccessModalOpen(true);
-    setIsSubmitting(false);
-    reset();
-    setTimeout(() => {
-      setShowSuccess(false);
-    }, 2000);
   };
 
-  if (filteredPerkins.length === 0) {
+  if (filteredPerkins.length === 0 && perkins.length > 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[450px] p-8 text-center bg-white rounded-3xl border border-dashed border-border shadow-sm">
         <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-rose-100 animate-pulse">
@@ -125,12 +126,7 @@ export const InputKinerja: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto pb-12">
       <div className="space-y-6">
-        <motion.div
-           initial={{ opacity: 0, y: 15 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.4 }}
-           className="text-center"
-        >
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="text-center">
           <h1 className="text-3xl font-extrabold text-text-header tracking-tight">Catat Aktivitas</h1>
           <p className="text-sm text-text-muted mt-2 font-medium">Laporkan kinerja harian Anda secara akurat dan tepat waktu.</p>
         </motion.div>
@@ -148,7 +144,6 @@ export const InputKinerja: React.FC = () => {
           </CardHeader>
           <CardContent className="p-6 sm:p-10">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label htmlFor="tanggal" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Tanggal Aktivitas</Label>
@@ -190,7 +185,7 @@ export const InputKinerja: React.FC = () => {
                 <Select
                   id="perkin_id"
                   placeholder="Klik untuk memilih Sasaran Kegiatan (SK)..."
-                  options={filteredPerkins.map(p => ({ label: p.name, value: p.id }))}
+                  options={filteredPerkins.map((p) => ({ label: p.nama_perkin || p.name || '', value: p.id }))}
                   className="h-14 rounded-2xl bg-slate-50 font-semibold shadow-sm"
                   {...register('perkin_id', { required: 'Sasaran Kegiatan wajib dipilih' })}
                 />
@@ -201,8 +196,8 @@ export const InputKinerja: React.FC = () => {
                 <Label htmlFor="iksk_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Indikator Kinerja (IKSK) dari SK Terpilih</Label>
                 <Select
                   id="iksk_id"
-                  placeholder={selectedPerkinId ? "Pilih Indikator Kinerja (IKSK) yang dilakukan..." : "Silakan pilih Sasaran Kegiatan (SK) terlebih dahulu"}
-                  options={ikskOptions.map(i => ({ label: i.name, value: i.id }))}
+                  placeholder={selectedPerkinId ? 'Pilih Indikator Kinerja (IKSK) yang dilakukan...' : 'Silakan pilih Sasaran Kegiatan (SK) terlebih dahulu'}
+                  options={ikskOptions.map((i) => ({ label: i.indikator || (i as any).name || '', value: i.id }))}
                   disabled={!selectedPerkinId || ikskOptions.length === 0}
                   className="h-14 rounded-2xl bg-slate-50 font-semibold shadow-sm"
                   {...register('iksk_id', { required: 'Indikator Kinerja (IKSK) wajib dipilih' })}
@@ -213,27 +208,11 @@ export const InputKinerja: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <Label htmlFor="volume" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Volume Capaian (Auto)</Label>
-                  <Input
-                    id="volume"
-                    type="number"
-                    placeholder="Auto-fill dari IKSK..."
-                    disabled
-                    className="h-14 rounded-2xl bg-slate-100 border-border font-semibold text-slate-500 cursor-not-allowed shadow-none"
-                    {...register('volume')}
-                  />
-                  {errors.volume && <p className="text-[0.7rem] text-rose-500 font-bold mt-2 flex items-center gap-1.5 pl-1"><AlertCircle className="w-4 h-4" /> {errors.volume.message as string}</p>}
+                  <Input id="volume" type="text" placeholder="Auto-fill dari IKSK..." disabled className="h-14 rounded-2xl bg-slate-100 border-border font-semibold text-slate-500 cursor-not-allowed shadow-none" {...register('volume')} />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="satuan" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Satuan (Auto)</Label>
-                  <Input
-                    id="satuan"
-                    placeholder="Auto-fill dari IKSK..."
-                    disabled
-                    className="h-14 rounded-2xl bg-slate-100 border-border font-semibold text-slate-500 cursor-not-allowed shadow-none"
-                    {...register('satuan')}
-                  />
-                  {errors.satuan && <p className="text-[0.7rem] text-rose-500 font-bold mt-2 flex items-center gap-1.5 pl-1"><AlertCircle className="w-4 h-4" /> {errors.satuan.message as string}</p>}
+                  <Input id="satuan" placeholder="Auto-fill dari IKSK..." disabled className="h-14 rounded-2xl bg-slate-100 border-border font-semibold text-slate-500 cursor-not-allowed shadow-none" {...register('satuan')} />
                 </div>
               </div>
 
@@ -249,16 +228,13 @@ export const InputKinerja: React.FC = () => {
               </div>
 
               <div className="pt-6 flex flex-col sm:flex-row gap-4">
-                <Button 
-                  type="submit" 
-                  className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest text-[0.8rem] shadow-xl shadow-accent/20 hover:shadow-accent/40 hover:-translate-y-1 transition-all duration-300" 
+                <Button
+                  type="submit"
+                  className="flex-1 h-14 rounded-2xl font-bold uppercase tracking-widest text-[0.8rem] shadow-xl shadow-accent/20 hover:shadow-accent/40 hover:-translate-y-1 transition-all duration-300"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Memproses Data...
-                    </div>
+                    <div className="flex items-center gap-3"><Loader2 className="w-5 h-5 animate-spin" /> Memproses Data...</div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5" />
@@ -267,13 +243,10 @@ export const InputKinerja: React.FC = () => {
                   )}
                 </Button>
                 {editingId && (
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     variant="outline"
-                    onClick={() => {
-                      setEditingId(null);
-                      reset();
-                    }}
+                    onClick={() => { setEditingId(null); reset(); }}
                     className="h-14 rounded-2xl border-border px-8 text-[0.8rem] font-bold uppercase tracking-widest text-text-muted hover:bg-slate-50 transition-all"
                   >
                     Batal
@@ -283,24 +256,20 @@ export const InputKinerja: React.FC = () => {
             </form>
           </CardContent>
         </Card>
-        
+
         <div className="p-6 sm:p-8 bg-surface border border-border rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
-           <div className="flex items-center gap-4 text-center sm:text-left">
-              <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent shrink-0">
-                <FileText className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm font-extrabold text-text-header tracking-tight">Butuh melihat riwayat?</p>
-                <p className="text-[0.7rem] text-text-muted font-bold uppercase tracking-widest mt-0.5">Semua laporan Anda tersimpan dengan aman</p>
-              </div>
-           </div>
-           <Button 
-             variant="outline" 
-             className="w-full sm:w-auto rounded-xl h-10 px-5 text-[0.65rem] font-black uppercase tracking-widest border-border hover:bg-white"
-             onClick={() => navigate('/user/riwayat')}
-           >
-             Buka Riwayat
-           </Button>
+          <div className="flex items-center gap-4 text-center sm:text-left">
+            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent shrink-0">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold text-text-header tracking-tight">Butuh melihat riwayat?</p>
+              <p className="text-[0.7rem] text-text-muted font-bold uppercase tracking-widest mt-0.5">Semua laporan Anda tersimpan dengan aman</p>
+            </div>
+          </div>
+          <Button variant="outline" className="w-full sm:w-auto rounded-xl h-10 px-5 text-[0.65rem] font-black uppercase tracking-widest border-border hover:bg-white" onClick={() => navigate('/user/riwayat')}>
+            Buka Riwayat
+          </Button>
         </div>
       </div>
 
@@ -312,33 +281,13 @@ export const InputKinerja: React.FC = () => {
         description="Laporan kinerja harian Anda telah berhasil dicatat ke dalam sistem. Terima kasih atas dedikasi Anda!"
         footer={
           <div className="flex gap-3 w-full">
-            <Button 
-                variant="outline" 
-                onClick={() => {
-                   setSuccessModalOpen(false);
-                }} 
-                className="flex-1 rounded-xl px-6 font-bold uppercase tracking-widest text-[0.7rem]"
-            >
-                Input Baru
-            </Button>
-            <Button 
-                onClick={() => {
-                   setSuccessModalOpen(false);
-                   navigate('/user/riwayat');
-                }} 
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 font-bold uppercase tracking-widest text-[0.7rem]"
-            >
-                Lihat Riwayat
-            </Button>
+            <Button variant="outline" onClick={() => setSuccessModalOpen(false)} className="flex-1 rounded-xl px-6 font-bold uppercase tracking-widest text-[0.7rem]">Input Baru</Button>
+            <Button onClick={() => { setSuccessModalOpen(false); navigate('/user/riwayat'); }} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 font-bold uppercase tracking-widest text-[0.7rem]">Lihat Riwayat</Button>
           </div>
         }
       >
         <div className="flex items-center justify-center p-6 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 mb-2">
-          <motion.div
-            initial={{ scale: 0.5, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', damping: 10 }}
-          >
+          <motion.div initial={{ scale: 0.5, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', damping: 10 }}>
             <PartyPopper className="w-20 h-20 text-emerald-500" />
           </motion.div>
         </div>

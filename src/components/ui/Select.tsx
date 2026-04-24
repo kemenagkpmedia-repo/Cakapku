@@ -1,8 +1,14 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 
+export interface SelectOption {
+  label: string;
+  value: string | number;
+  disabled?: boolean;
+}
+
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  options: { label: string; value: string | number }[];
+  options: SelectOption[];
   placeholder?: string;
 }
 
@@ -22,8 +28,13 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             {placeholder}
           </option>
         )}
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
+        {options.map((option, idx) => (
+          <option
+            key={`${option.value}-${idx}`}
+            value={option.value}
+            disabled={option.disabled}
+            style={option.disabled ? { color: '#94a3b8', fontStyle: 'italic', fontWeight: 600 } : undefined}
+          >
             {option.label}
           </option>
         ))}
@@ -32,3 +43,4 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   }
 );
 Select.displayName = 'Select';
+

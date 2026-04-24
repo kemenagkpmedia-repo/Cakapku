@@ -1,17 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Role = 'admin' | 'operator' | 'user' | 'pimpinan';
+export type Role = 'ADMIN' | 'OPERATOR' | 'USER' | 'PIMPINAN';
 
 export interface User {
   id: number;
   nama?: string;
+  name?: string;           // alias untuk nama (backward compat)
   email: string;
   role: Role;
   id_satker?: number;
+  satker_id?: number;      // alias untuk id_satker (backward compat)
   nip?: string;
   jabatan?: string;
   gol_ruang?: string;
+  pangkat?: string;
+  golongan?: string;
+  phone?: string;
+  address?: string;
 }
 
 interface AuthState {
