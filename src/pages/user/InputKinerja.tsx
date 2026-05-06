@@ -14,14 +14,33 @@ import { Modal } from '../../components/ui/Modal';
 import { AlertCircle, CheckCircle, Edit3, FileText, PartyPopper, Loader2 } from 'lucide-react';
 
 export const InputKinerja: React.FC = () => {
-  const { perkins, iksks, fetchPerkins, fetchPeriodes, fetchIksks, getFilteredPerkins } = usePerkinStore();
+  const { 
+    perkins, 
+    fetchPerkins, 
+    fetchPeriodes, 
+    fetchIksks, 
+    getFilteredPerkins,
+    isLoadingPerkins,
+    isLoadingPeriodes,
+    isLoadingIksks
+  } = usePerkinStore();
   const { user } = useAuthStore();
-  const { addRecord, updateRecord, setEditingId, editingId, fetchKinerja, records } = useKinerjaStore();
+  const { 
+    addRecord, 
+    updateRecord, 
+    setEditingId, 
+    editingId, 
+    fetchKinerja, 
+    records,
+    isLoading: isLoadingKinerja 
+  } = useKinerjaStore();
   const navigate = useNavigate();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm();
   const [ikskOptions, setIkskOptions] = useState<{ id: number; indikator: string; target_vol?: string; target_satuan?: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+
+  const isInitialLoading = isLoadingPerkins || isLoadingPeriodes || isLoadingIksks || isLoadingKinerja;
 
   // Load data dari API saat mount
   useEffect(() => {
@@ -109,6 +128,17 @@ export const InputKinerja: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[450px] p-8 text-center">
+        <div className="w-16 h-16 bg-accent/10 text-accent rounded-2xl flex items-center justify-center mb-4 animate-pulse">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+        <p className="text-sm font-bold text-text-muted uppercase tracking-widest animate-pulse">Menyiapkan Data...</p>
+      </div>
+    );
+  }
 
   if (filteredPerkins.length === 0 && perkins.length > 0) {
     return (

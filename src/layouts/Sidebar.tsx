@@ -45,6 +45,10 @@ export const Sidebar: React.FC = () => {
       case 'PIMPINAN':
         return [
           { to: '/pimpinan/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+          { to: '/pimpinan/monitoring', icon: Users, label: 'Monitoring Bawahan' },
+          { to: '/user/kinerja', icon: FileText, label: 'Input Kinerja' },
+          { to: '/user/riwayat', icon: CheckSquare, label: 'Riwayat Kinerja' },
+          { to: '/user/export', icon: BarChart3, label: 'Export LKB' },
         ];
       default:
         return [];

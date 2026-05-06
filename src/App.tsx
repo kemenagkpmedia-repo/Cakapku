@@ -8,6 +8,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import { MainLayout } from './layouts/MainLayout';
 import { Login } from './pages/auth/Login';
 import { Dashboard } from './pages/pimpinan/Dashboard';
+import { MonitoringKinerja } from './pages/pimpinan/MonitoringKinerja';
 import { InputKinerja } from './pages/user/InputKinerja';
 import { RiwayatKinerja } from './pages/user/RiwayatKinerja';
 import { Biodata } from './pages/user/Biodata';
@@ -18,6 +19,18 @@ import { ManajemenPerkinSatker } from './pages/operator/ManajemenPerkinSatker';
 import { ManajemenUser } from './pages/admin/ManajemenUser';
 import { ManajemenSatker } from './pages/admin/ManajemenSatker';
 import { Unauthorized, PlaceholderPage } from './pages/Unauthorized';
+import { useAuthStore } from './store/authStore';
+import { getDashboardPath } from './utils/navigation';
+
+const RootRedirect = () => {
+  const { isAuthenticated, user } = useAuthStore();
+  
+  if (isAuthenticated && user) {
+    return <Navigate to={getDashboardPath(user.role)} replace />;
+  }
+  
+  return <Navigate to="/login" replace />;
+};
 
 export default function App() {
   return (
@@ -28,7 +41,7 @@ export default function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         
         {/* Default Redirect */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<RootRedirect />} />
 
         {/* Protected Routes */}
         <Route element={<MainLayout />}>
@@ -48,7 +61,7 @@ export default function App() {
           </Route>
 
           {/* User Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['USER']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['USER', 'PIMPINAN']} />}>
             <Route path="/user/kinerja" element={<InputKinerja />} />
             <Route path="/user/riwayat" element={<RiwayatKinerja />} />
             <Route path="/user/biodata" element={<Biodata />} />
@@ -58,6 +71,7 @@ export default function App() {
           {/* Pimpinan Routes */}
           <Route element={<ProtectedRoute allowedRoles={['PIMPINAN']} />}>
             <Route path="/pimpinan/dashboard" element={<Dashboard />} />
+            <Route path="/pimpinan/monitoring" element={<MonitoringKinerja />} />
           </Route>
 
         </Route>

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { kinerjaService } from '../api/services/kinerjaService';
+import { kinerjaService, PerformanceRecordResponse, SubordinateUserResponse } from '../api/services/kinerjaService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -43,6 +43,7 @@ export interface PerformanceRecord {
 
 interface KinerjaState {
   records: PerformanceRecord[];
+  bawahanUsers: any[];
   isLoading: boolean;
   error: string | null;
   editingId: number | null;
@@ -60,6 +61,7 @@ interface KinerjaState {
   }) => Promise<void>;
   deleteRecord: (id: number) => Promise<void>;
   setEditingId: (id: number | null) => void;
+  fetchBawahanKinerja: () => Promise<void>;
 }
 
 // ─── Helper: map raw API response to UI-friendly shape ───────────────────────
@@ -86,6 +88,7 @@ function mapRecord(r: any): PerformanceRecord {
 
 export const useKinerjaStore = create<KinerjaState>()((set) => ({
   records: [],
+  bawahanUsers: [],
   isLoading: false,
   error: null,
   editingId: null,
@@ -94,7 +97,7 @@ export const useKinerjaStore = create<KinerjaState>()((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await kinerjaService.getAll();
-      const raw = res.data?.data || res.data || [];
+      const raw = (res.data as any)?.data || res.data || [];
       set({ records: raw.map(mapRecord), isLoading: false });
     } catch (err: any) {
       set({ error: err.response?.data?.message || err.message, isLoading: false });
@@ -103,13 +106,13 @@ export const useKinerjaStore = create<KinerjaState>()((set) => ({
 
   addRecord: async (data) => {
     const res = await kinerjaService.create(data);
-    const created = res.data?.data || res.data;
+    const created = (res.data as any)?.data || res.data;
     set((state) => ({ records: [mapRecord(created), ...state.records] }));
   },
 
   updateRecord: async (id, data) => {
     const res = await kinerjaService.update(id, data);
-    const updated = res.data?.data || res.data;
+    const updated = (res.data as any)?.data || res.data;
     set((state) => ({
       records: state.records.map((r) => (r.id === id ? mapRecord({ ...r, ...updated }) : r)),
     }));
@@ -121,4 +124,23 @@ export const useKinerjaStore = create<KinerjaState>()((set) => ({
   },
 
   setEditingId: (id) => set({ editingId: id }),
+
+  fetchBawahanKinerja: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await kinerjaService.getBawahanKinerja();
+      const raw = (res.data as any)?.data || res.data || [];
+      // raw is a list of users, each has kinerja_harians
+      const usersWithMappedRecords = raw.map((u: any) => ({
+        ...u,
+        totalReports: u.kinerja_harians?.length || 0,
+        records: (u.kinerja_harians || []).map(mapRecord).sort((a: any, b: any) => 
+          new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        )
+      }));
+      set({ bawahanUsers: usersWithMappedRecords, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.response?.data?.message || err.message, isLoading: false });
+    }
+  },
 }));

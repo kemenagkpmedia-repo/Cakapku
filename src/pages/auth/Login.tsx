@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'motion/react';
@@ -9,14 +9,22 @@ import { Input } from '../../components/ui/Input';
 import { Label } from '../../components/ui/Label';
 import api from '../../api/axios';
 import { Card, CardContent } from '../../components/ui/Card';
+import { getDashboardPath } from '../../utils/navigation';
 
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, isAuthenticated, user: currentUser } = useAuthStore();
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      navigate(getDashboardPath(currentUser.role), { replace: true });
+    }
+  }, [isAuthenticated, currentUser, navigate]);
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);
@@ -38,17 +46,8 @@ export const Login: React.FC = () => {
       const normalizedUser = { ...user, role };
 
       login(normalizedUser, token);
-
       setIsLoading(false);
-
-      // Redirect berdasarkan role (case-insensitive)
-      switch (role) {
-        case 'ADMIN':    navigate('/admin/users');         break;
-        case 'OPERATOR': navigate('/operator/perkin');     break;
-        case 'USER':     navigate('/user/kinerja');        break;
-        case 'PIMPINAN': navigate('/pimpinan/dashboard');  break;
-        default:         navigate('/user/kinerja');
-      }
+      navigate(getDashboardPath(role));
     } catch (error: any) {
       setIsLoading(false);
       console.error('Login failed:', error);
