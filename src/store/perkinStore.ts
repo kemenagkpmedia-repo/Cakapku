@@ -2,17 +2,25 @@ import { create } from 'zustand';
 import { periodeService } from '../api/services/periodeService';
 import { perkinService } from '../api/services/perkinService';
 import { ikskService } from '../api/services/ikskService';
+import { sasaranKegiatanService } from '../api/services/sasaranKegiatanService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface IKSK {
   id: number;
-  id_perkin: number;
+  id_sasaran_kegiatan: number;
   indikator: string;
   target_vol?: string;
   target_satuan?: string;
   // alias untuk kompatibilitas UI lama
   name?: string;
+}
+
+export interface SasaranKegiatan {
+  id: number;
+  id_perkin: number;
+  nama_sasaran: string;
+  iksks?: IKSK[];
 }
 
 export interface Period {
@@ -31,6 +39,7 @@ export interface Perkin {
   no_sk?: string;
   id_periode: number;
   status?: boolean;
+  sasaran_kegiatans?: SasaranKegiatan[];
   iksks?: IKSK[];
   satker_ids?: number[];
   // alias untuk kompatibilitas UI lama
@@ -61,6 +70,16 @@ interface PerkinState {
   deletePerkin: (id: number) => Promise<void>;
   assignSatker: (perkinId: number, satkerIds: number[]) => Promise<void>;
   importPerkin: (file: File, id_periode: number) => Promise<void>;
+
+  // Sasaran Kegiatan (SK)
+  sasaranKegiatans: SasaranKegiatan[];
+  isLoadingSK: boolean;
+  errorSK: string | null;
+  fetchSasaranKegiatans: () => Promise<void>;
+  addSasaranKegiatan: (data: { id_perkin: number; nama_sasaran: string }) => Promise<void>;
+  updateSasaranKegiatan: (id: number, data: { nama_sasaran: string }) => Promise<void>;
+  deleteSasaranKegiatan: (id: number) => Promise<void>;
+
   clearPerkins: () => void;
 
   // IKSK
@@ -140,8 +159,14 @@ export const usePerkinStore = create<PerkinState>()((set, get) => ({
         ...p,
         name: p.nama_perkin,
         period_id: p.id_periode,
+        // Flatten iksks for backward compatibility if needed
         iksk: (p.iksks || []).map((i: any) => ({ ...i, name: i.indikator })),
         satker_ids: (p.satkers || []).map((s: any) => s.id),
+        // Grouped view
+        sasaran_kegiatans: (p.sasaran_kegiatans || []).map((sk: any) => ({
+          ...sk,
+          iksks: (sk.iksks || []).map((i: any) => ({ ...i, name: i.indikator }))
+        }))
       }));
       set({ perkins: data, isLoadingPerkins: false });
     } catch (err: any) {
@@ -187,6 +212,40 @@ export const usePerkinStore = create<PerkinState>()((set, get) => ({
 
   clearPerkins: () => set({ perkins: [] }),
 
+  // ── Sasaran Kegiatan (SK) ────────────────────────────────────────────────
+  sasaranKegiatans: [],
+  isLoadingSK: false,
+  errorSK: null,
+
+  fetchSasaranKegiatans: async () => {
+    set({ isLoadingSK: true, errorSK: null });
+    try {
+      const res = await sasaranKegiatanService.getAll();
+      const data = res.data?.data || res.data || [];
+      set({ sasaranKegiatans: data, isLoadingSK: false });
+    } catch (err: any) {
+      set({ errorSK: err.response?.data?.message || err.message, isLoadingSK: false });
+    }
+  },
+
+  addSasaranKegiatan: async (data) => {
+    await sasaranKegiatanService.create(data);
+    await get().fetchSasaranKegiatans();
+    await get().fetchPerkins(); // Refresh perkins to show new SK
+  },
+
+  updateSasaranKegiatan: async (id, data) => {
+    await sasaranKegiatanService.update(id, data);
+    await get().fetchSasaranKegiatans();
+    await get().fetchPerkins();
+  },
+
+  deleteSasaranKegiatan: async (id) => {
+    await sasaranKegiatanService.delete(id);
+    await get().fetchSasaranKegiatans();
+    await get().fetchPerkins();
+  },
+
   // ── IKSK ────────────────────────────────────────────────────────────────
   iksks: [],
   isLoadingIksks: false,
@@ -206,17 +265,13 @@ export const usePerkinStore = create<PerkinState>()((set, get) => ({
     }
   },
 
-  addIksk: async (data) => {
-    const res = await ikskService.create(data);
+  addIksk: async (data: { id_sasaran_kegiatan: number; indikator: string; target_vol?: string; target_satuan?: string }) => {
+    const res = await ikskService.create(data as any);
     const i = res.data?.data || res.data;
     set((state) => ({
       iksks: [...state.iksks, { ...i, name: i.indikator }],
-      perkins: state.perkins.map((p) =>
-        p.id === data.id_perkin
-          ? { ...p, iksk: [...(p.iksk || []), { ...i, name: i.indikator }] }
-          : p
-      ),
     }));
+    await get().fetchPerkins();
   },
 
   updateIksk: async (id, data) => {
@@ -225,6 +280,7 @@ export const usePerkinStore = create<PerkinState>()((set, get) => ({
     set((state) => ({
       iksks: state.iksks.map((i) => (i.id === id ? { ...i, ...updated, name: updated.indikator } : i)),
     }));
+    await get().fetchPerkins();
   },
 
   deleteIksk: async (id) => {
@@ -232,6 +288,7 @@ export const usePerkinStore = create<PerkinState>()((set, get) => ({
     set((state) => ({
       iksks: state.iksks.filter((i) => i.id !== id),
     }));
+    await get().fetchPerkins();
   },
 
   // ── Helpers ───────────────────────────────────────────────────────────────

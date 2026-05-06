@@ -14,6 +14,8 @@ import { RiwayatKinerja } from './pages/user/RiwayatKinerja';
 import { Biodata } from './pages/user/Biodata';
 import { ExportLKB } from './pages/user/ExportLKB';
 import { ManajemenPerkin } from './pages/operator/ManajemenPerkin';
+import { ManajemenIksk } from './pages/operator/ManajemenIksk';
+import { ManajemenSk } from './pages/operator/ManajemenSk';
 import { ManajemenPeriode } from './pages/operator/ManajemenPeriode';
 import { ManajemenPerkinSatker } from './pages/operator/ManajemenPerkinSatker';
 import { ManajemenUser } from './pages/admin/ManajemenUser';
@@ -55,6 +57,8 @@ export default function App() {
           {/* Operator Routes */}
           <Route element={<ProtectedRoute allowedRoles={['OPERATOR']} />}>
             <Route path="/operator/perkin" element={<ManajemenPerkin />} />
+            <Route path="/operator/sk" element={<ManajemenSk />} />
+            <Route path="/operator/iksk" element={<ManajemenIksk />} />
             <Route path="/operator/periode" element={<ManajemenPeriode />} />
             <Route path="/operator/perkin-satker" element={<ManajemenPerkinSatker />} />
             <Route path="/operator/export" element={<PlaceholderPage title="Export Laporan" />} />

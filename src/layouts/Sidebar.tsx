@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
 import { 
@@ -13,14 +13,26 @@ import {
   LayoutDashboard,
   User,
   ChevronLeft,
+  ChevronDown,
   Menu,
-  Calendar
+  Calendar,
+  Target,
+  Activity,
+  Upload
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuthStore();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
+  const location = useLocation();
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  const toggleMenu = (label: string) => {
+    setOpenMenus(prev => 
+      prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
+    );
+  };
 
   const getLinks = () => {
     switch ((user?.role || '').toUpperCase()) {
@@ -32,7 +44,15 @@ export const Sidebar: React.FC = () => {
       case 'OPERATOR':
         return [
           { to: '/operator/periode', icon: Calendar, label: 'Manajemen Periode' },
-          { to: '/operator/perkin', icon: FileText, label: 'Perjanjian Kinerja' },
+          { 
+            label: 'Perjanjian Kinerja', 
+            icon: FileText,
+            children: [
+              { to: '/operator/perkin', icon: Upload, label: 'Import Perkin' },
+              { to: '/operator/sk', icon: Target, label: 'Sasaran Kegiatan (SK)' },
+              { to: '/operator/iksk', icon: Activity, label: 'Indikator Kinerja (IKSK)' },
+            ]
+          },
           { to: '/operator/perkin-satker', icon: Building, label: 'Plotting Satker' },
           { to: '/operator/export', icon: BarChart3, label: 'Export Data' },
         ];
@@ -90,35 +110,89 @@ export const Sidebar: React.FC = () => {
         {!sidebarCollapsed && (
           <p className="px-4 text-[0.65rem] font-bold text-white/30 uppercase tracking-[0.2em] mb-4">Navigation</p>
         )}
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            title={sidebarCollapsed ? link.label : ''}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3.5 py-3 text-[0.8125rem] font-semibold transition-all duration-300 rounded-xl group relative overflow-hidden',
-                sidebarCollapsed ? 'px-0 justify-center' : 'px-4',
-                isActive
-                  ? 'bg-accent/15 text-white'
-                  : 'text-white/50 hover:bg-white/[0.03] hover:text-white/80'
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <link.icon className={cn("w-[20px] h-[20px] shrink-0 transition-transform duration-500 group-hover:scale-110", isActive ? "text-accent" : "text-white/30 group-hover:text-white/60")} />
-                {!sidebarCollapsed && <span>{link.label}</span>}
-                {isActive && (
-                  <motion.div 
-                    layoutId="active-nav-indicator"
-                    className={cn("absolute bg-accent rounded-full", sidebarCollapsed ? "inset-0 bg-accent/5 -z-10" : "left-0 top-1/2 -translate-y-1/2 w-1 h-6")}
-                  />
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
+        {links.map((link) => {
+          if (link.children) {
+            const isOpen = openMenus.includes(link.label) || link.children.some(c => location.pathname === c.to);
+            return (
+              <div key={link.label} className="space-y-1">
+                <button
+                  onClick={() => toggleMenu(link.label)}
+                  className={cn(
+                    'w-full flex items-center gap-3.5 py-3 text-[0.8125rem] font-semibold transition-all duration-300 rounded-xl group relative overflow-hidden px-4',
+                    isOpen ? 'bg-white/[0.05] text-white' : 'text-white/50 hover:bg-white/[0.03] hover:text-white/80'
+                  )}
+                >
+                  <link.icon className={cn("w-[20px] h-[20px] shrink-0 transition-transform duration-500 group-hover:scale-110", isOpen ? "text-accent" : "text-white/30 group-hover:text-white/60")} />
+                  {!sidebarCollapsed && (
+                    <>
+                      <span className="flex-1 text-left">{link.label}</span>
+                      <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", isOpen && "rotate-180")} />
+                    </>
+                  )}
+                </button>
+                
+                <AnimatePresence>
+                  {isOpen && !sidebarCollapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden space-y-1 pl-4"
+                    >
+                      {link.children.map((child) => (
+                        <NavLink
+                          key={child.to}
+                          to={child.to}
+                          className={({ isActive }) =>
+                            cn(
+                              'flex items-center gap-3 py-2 px-4 text-[0.75rem] font-semibold transition-all duration-300 rounded-lg group relative',
+                              isActive
+                                ? 'text-white bg-accent/10'
+                                : 'text-white/40 hover:bg-white/[0.02] hover:text-white/70'
+                            )
+                          }
+                        >
+                          <child.icon className="w-[14px] h-[14px] shrink-0" />
+                          <span>{child.label}</span>
+                        </NavLink>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          }
+
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to!}
+              title={sidebarCollapsed ? link.label : ''}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3.5 py-3 text-[0.8125rem] font-semibold transition-all duration-300 rounded-xl group relative overflow-hidden',
+                  sidebarCollapsed ? 'px-0 justify-center' : 'px-4',
+                  isActive
+                    ? 'bg-accent/15 text-white'
+                    : 'text-white/50 hover:bg-white/[0.03] hover:text-white/80'
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <link.icon className={cn("w-[20px] h-[20px] shrink-0 transition-transform duration-500 group-hover:scale-110", isActive ? "text-accent" : "text-white/30 group-hover:text-white/60")} />
+                  {!sidebarCollapsed && <span>{link.label}</span>}
+                  {isActive && (
+                    <motion.div 
+                      layoutId="active-nav-indicator"
+                      className={cn("absolute bg-accent rounded-full", sidebarCollapsed ? "inset-0 bg-accent/5 -z-10" : "left-0 top-1/2 -translate-y-1/2 w-1 h-6")}
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       <div className="p-4 mt-auto">

@@ -252,31 +252,48 @@ export const ManajemenPerkin: React.FC = () => {
                         <thead>
                           <tr className="bg-white">
                             <th className="text-left py-4 px-8 border-b border-border/40 text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-16">No</th>
+                            <th className="text-left py-4 px-4 border-b border-border/40 text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-1/3">Sasaran Kegiatan (SK)</th>
                             <th className="text-left py-4 px-4 border-b border-border/40 text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Indikator Kinerja (IKSK)</th>
                             <th className="text-center py-4 px-8 border-b border-border/40 text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-28">Target Vol</th>
                             <th className="text-center py-4 px-8 border-b border-border/40 text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-28">Satuan</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/20">
-                          {(perkin.iksk || perkin.iksks || []).map((iksk, idx) => (
-                            <tr key={iksk.id} className="hover:bg-slate-50/50 transition-colors group/row">
-                              <td className="py-4 px-8 text-center text-[0.8rem] font-extrabold text-text-muted/60">{idx + 1}</td>
-                              <td className="py-4 px-4 font-semibold text-text-main tracking-tight leading-relaxed">
-                                {iksk.indikator || iksk.name}
-                              </td>
-                              <td className="py-4 px-8 text-center text-[0.9375rem] font-extrabold text-text-header group-hover/row:text-accent transition-colors">
-                                {iksk.target_vol || '-'}
-                              </td>
-                              <td className="py-4 px-8 text-center">
-                                <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-text-muted font-extrabold text-[0.65rem] uppercase tracking-widest group-hover/row:bg-accent/10 group-hover/row:text-accent transition-all">
-                                  {iksk.target_satuan || '-'}
-                                </span>
-                              </td>
-                            </tr>
+                          {(perkin.sasaran_kegiatans || []).map((sk, skIdx) => (
+                            <React.Fragment key={sk.id}>
+                              {(sk.iksks || []).map((iksk, ikskIdx) => (
+                                <tr key={iksk.id} className="hover:bg-slate-50/50 transition-colors group/row">
+                                  <td className="py-4 px-8 text-center text-[0.8rem] font-extrabold text-text-muted/60">
+                                    {ikskIdx === 0 ? skIdx + 1 : ''}
+                                  </td>
+                                  <td className="py-4 px-4 font-bold text-text-header tracking-tight leading-relaxed border-r border-border/10">
+                                    {ikskIdx === 0 ? sk.nama_sasaran : ''}
+                                  </td>
+                                  <td className="py-4 px-4 font-semibold text-text-main tracking-tight leading-relaxed">
+                                    {iksk.indikator || iksk.name}
+                                  </td>
+                                  <td className="py-4 px-8 text-center text-[0.9375rem] font-extrabold text-text-header group-hover/row:text-accent transition-colors">
+                                    {iksk.target_vol || '-'}
+                                  </td>
+                                  <td className="py-4 px-8 text-center">
+                                    <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-text-muted font-extrabold text-[0.65rem] uppercase tracking-widest group-hover/row:bg-accent/10 group-hover/row:text-accent transition-all">
+                                      {iksk.target_satuan || '-'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                              {(sk.iksks || []).length === 0 && (
+                                <tr className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="py-4 px-8 text-center text-[0.8rem] font-extrabold text-text-muted/60">{skIdx + 1}</td>
+                                  <td className="py-4 px-4 font-bold text-text-header tracking-tight leading-relaxed border-r border-border/10">{sk.nama_sasaran}</td>
+                                  <td colSpan={3} className="py-4 px-4 text-sm text-text-muted italic">Belum ada IKSK</td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           ))}
-                          {(perkin.iksk || perkin.iksks || []).length === 0 && (
+                          {(perkin.sasaran_kegiatans || []).length === 0 && (
                             <tr>
-                              <td colSpan={4} className="py-6 text-center text-sm text-text-muted italic">Belum ada IKSK</td>
+                              <td colSpan={5} className="py-6 text-center text-sm text-text-muted italic">Belum ada Sasaran Kegiatan</td>
                             </tr>
                           )}
                         </tbody>
