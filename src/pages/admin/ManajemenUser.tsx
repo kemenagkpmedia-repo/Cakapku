@@ -216,36 +216,38 @@ export const ManajemenUser: React.FC = () => {
           <p className="text-sm text-text-muted mt-2 font-medium">Kelola hak akses dan profil pegawai dalam sistem.</p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-wrap gap-3"
-        >
-          <Button
-            variant="outline"
-            onClick={downloadTemplate}
-            className="rounded-xl h-10 px-4 font-bold uppercase tracking-widest text-[0.65rem] border-border text-text-main hover:bg-slate-50"
+        {currentUser?.role === 'SUPER ADMIN' && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-wrap gap-3"
           >
-            <FileDown className="w-4 h-4 mr-2" /> Template
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsImportModalOpen(true)}
-            className="rounded-xl h-10 px-4 font-bold uppercase tracking-widest text-[0.65rem] border-border text-accent hover:bg-accent/5"
-          >
-            <FileUp className="w-4 h-4 mr-2" /> Import Excel
-          </Button>
-          <Button
-            onClick={() => {
-              resetForm();
-              setIsAddModalOpen(true);
-            }}
-            className="rounded-xl h-10 px-5 font-bold uppercase tracking-widest text-[0.65rem] shadow-lg shadow-accent/20"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Tambah User
-          </Button>
-        </motion.div>
+            <Button
+              variant="outline"
+              onClick={downloadTemplate}
+              className="rounded-xl h-10 px-4 font-bold uppercase tracking-widest text-[0.65rem] border-border text-text-main hover:bg-slate-50"
+            >
+              <FileDown className="w-4 h-4 mr-2" /> Template
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsImportModalOpen(true)}
+              className="rounded-xl h-10 px-4 font-bold uppercase tracking-widest text-[0.65rem] border-border text-accent hover:bg-accent/5"
+            >
+              <FileUp className="w-4 h-4 mr-2" /> Import Excel
+            </Button>
+            <Button
+              onClick={() => {
+                resetForm();
+                setIsAddModalOpen(true);
+              }}
+              className="rounded-xl h-10 px-5 font-bold uppercase tracking-widest text-[0.65rem] shadow-lg shadow-accent/20"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Tambah User
+            </Button>
+          </motion.div>
+        )}
       </div>
 
       <Card className="rounded-[2rem] border-border shadow-sm overflow-hidden bg-white">
@@ -352,15 +354,17 @@ export const ManajemenUser: React.FC = () => {
                           >
                             <Edit3 className="w-4.5 h-4.5" />
                           </button>
-                          <button
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-colors border border-transparent hover:border-rose-100"
-                          >
-                            <Trash2 className="w-4.5 h-4.5" />
-                          </button>
+                          {currentUser?.role === 'SUPER ADMIN' && (
+                            <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                              className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 transition-colors border border-transparent hover:border-rose-100"
+                            >
+                              <Trash2 className="w-4.5 h-4.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
