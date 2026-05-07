@@ -36,23 +36,15 @@ export const Header: React.FC = () => {
     
     setIsSwitching(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/switch-role`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${useAuthStore.getState().token}`
-        },
-        body: JSON.stringify({ role })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        updateConfig(data.config);
-        updateUser({ role: data.config.active_role });
-        // Redirect ke dashboard role baru
-        navigate(data.config.dashboard_path);
-        setIsDropdownOpen(false);
-      }
+      const { default: api } = await import('../api/axios');
+      const response = await api.post('/switch-role', { role });
+      
+      const data = response.data;
+      updateConfig(data.config);
+      updateUser({ role: data.config.active_role });
+      // Redirect ke dashboard role baru
+      navigate(data.config.dashboard_path);
+      setIsDropdownOpen(false);
     } catch (error) {
       console.error('Failed to switch role:', error);
     } finally {
@@ -121,7 +113,7 @@ export const Header: React.FC = () => {
             </div>
             
             <div className="px-2 space-y-0.5">
-              {user?.role === 'USER' && (
+              {config?.active_role === 'USER' && (
                 <Link 
                   to="/user/biodata" 
                   className="flex items-center gap-3 px-3 py-2.5 text-[0.8125rem] font-semibold text-text-main hover:bg-accent/5 hover:text-accent rounded-xl transition-all group"

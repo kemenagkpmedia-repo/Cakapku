@@ -220,7 +220,7 @@ export const ManajemenUser: React.FC = () => {
           <p className="text-sm text-text-muted mt-2 font-medium">Kelola hak akses dan profil pegawai dalam sistem.</p>
         </motion.div>
 
-        {currentUser?.role === 'SUPER ADMIN' && (
+        {config?.active_role === 'SUPER ADMIN' && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -362,7 +362,7 @@ export const ManajemenUser: React.FC = () => {
                           >
                             <Edit3 className="w-4.5 h-4.5" />
                           </button>
-                          {currentUser?.role === 'SUPER ADMIN' && (
+                          {config?.active_role === 'SUPER ADMIN' && (
                             <button
                               onClick={() => {
                                 setSelectedUser(user);
@@ -637,7 +637,7 @@ export const ManajemenUser: React.FC = () => {
               <Select
                 value={formData.id_satker}
                 onChange={(e) => setFormData({ ...formData, id_satker: e.target.value })}
-                disabled={currentUser?.role !== 'SUPER ADMIN'}
+                disabled={config?.active_role !== 'SUPER ADMIN'}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
                   ...satkers.map(s => ({ label: s.nama_satker || s.name || '', value: s.id.toString() }))
