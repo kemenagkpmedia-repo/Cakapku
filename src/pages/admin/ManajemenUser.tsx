@@ -137,6 +137,8 @@ export const ManajemenUser: React.FC = () => {
         id_satker: formData.id_satker ? Number(formData.id_satker) : undefined,
         jabatan: formData.jabatan,
         gol_ruang: formData.gol_ruang,
+        // Sertakan password jika diisi
+        password: formData.password.trim() || undefined,
       });
       resetForm();
       setSelectedUser(null);
@@ -457,6 +459,7 @@ export const ManajemenUser: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         title="Tambah Akun Pegawai"
+        footer={<></>}
       >
         <form onSubmit={handleAddSubmit} className="space-y-5 pt-4">
           {/* Row 1: Nama + NIP */}
@@ -562,6 +565,7 @@ export const ManajemenUser: React.FC = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         title="Edit Profil Pegawai"
+        footer={<></>}
       >
         <form onSubmit={handleEditSubmit} className="space-y-5 pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -595,6 +599,7 @@ export const ManajemenUser: React.FC = () => {
               <Select
                 value={formData.id_satker}
                 onChange={(e) => setFormData({ ...formData, id_satker: e.target.value })}
+                disabled={currentUser?.role !== 'SUPER ADMIN'}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
                   ...satkers.map(s => ({ label: s.nama_satker || s.name || '', value: s.id.toString() }))
@@ -605,6 +610,19 @@ export const ManajemenUser: React.FC = () => {
             <div className="space-y-2">
               <Label>Jabatan</Label>
               <Input value={formData.jabatan} onChange={(e) => setFormData({ ...formData, jabatan: e.target.value })} className="h-12 rounded-xl" />
+            </div>
+          </div>
+          {/* Row Baru: Password Edit */}
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label>Ubah Password <span className="text-[0.65rem] text-text-muted italic">(Kosongkan jika tidak ingin merubah)</span></Label>
+              <Input 
+                type="password" 
+                placeholder="Masukkan password baru..." 
+                value={formData.password} 
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                className="h-12 rounded-xl" 
+              />
             </div>
           </div>
           {/* Golongan Ruang Edit */}
@@ -653,6 +671,7 @@ export const ManajemenUser: React.FC = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         title="Import Data via Excel"
+        footer={<></>}
       >
         <div className="space-y-6 pt-4">
           <div className="p-6 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center bg-slate-50 gap-4 text-center">
