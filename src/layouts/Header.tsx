@@ -2,15 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useSatkerStore } from '../store/satkerStore';
-import { User, LogOut, ChevronDown, UserCircle, Menu, X } from 'lucide-react';
+import { User, LogOut, ChevronDown, UserCircle, Menu, X, Shield, RefreshCw } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useUIStore } from '../store/uiStore';
 
 export const Header: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { user, config, logout, updateConfig, updateUser } = useAuthStore();
   const { satkers } = useSatkerStore();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const satker = satkers.find(s => s.id === user?.satker_id);
@@ -28,6 +29,35 @@ export const Header: React.FC = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleSwitchRole = async (role: string) => {
+    if (role === config?.active_role) return;
+    
+    setIsSwitching(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/switch-role`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${useAuthStore.getState().token}`
+        },
+        body: JSON.stringify({ role })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        updateConfig(data.config);
+        updateUser({ role: data.config.active_role });
+        // Redirect ke dashboard role baru
+        navigate(data.config.dashboard_path);
+        setIsDropdownOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to switch role:', error);
+    } finally {
+      setIsSwitching(false);
+    }
   };
 
 
@@ -54,7 +84,7 @@ export const Header: React.FC = () => {
               <span className="text-[0.65rem] font-bold text-accent uppercase tracking-[0.15em] leading-none">CAKAPKU</span>
               <div className="w-1 h-1 rounded-full bg-border" />
               <div className="flex items-center gap-2">
-                <span className="text-[0.65rem] font-bold text-text-muted/60 uppercase tracking-[0.1em]">{user?.role}</span>
+                <span className="text-[0.65rem] font-bold text-text-muted/60 uppercase tracking-[0.1em]">{config?.active_role}</span>
               </div>
             </div>
             {satker && (
@@ -100,6 +130,39 @@ export const Header: React.FC = () => {
                   <UserCircle className="w-4 h-4 text-text-muted group-hover:text-accent transition-colors" />
                   Profil & Biodata
                 </Link>
+              )}
+
+              {/* Role Switcher */}
+              {config && config.all_roles.length > 1 && (
+                <div className="mt-2 pt-2 border-t border-border">
+                  <p className="px-3 pb-2 text-[0.6rem] font-black text-text-muted uppercase tracking-widest">Switch Role</p>
+                  <div className="space-y-0.5 px-1">
+                    {config.all_roles.map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => handleSwitchRole(r)}
+                        disabled={isSwitching}
+                        className={cn(
+                          "w-full flex items-center justify-between px-3 py-2 rounded-lg text-[0.75rem] font-bold transition-all",
+                          r === config.active_role 
+                            ? "bg-accent/10 text-accent" 
+                            : "text-text-main hover:bg-slate-50 hover:text-accent"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Shield className={cn("w-3.5 h-3.5", r === config.active_role ? "text-accent" : "text-text-muted")} />
+                          {r}
+                        </div>
+                        {isSwitching && r !== config.active_role && (
+                          <RefreshCw className="w-3 h-3 animate-spin opacity-40" />
+                        )}
+                        {r === config.active_role && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
 
               <button 

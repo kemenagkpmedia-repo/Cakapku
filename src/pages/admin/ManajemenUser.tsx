@@ -40,7 +40,7 @@ export const ManajemenUser: React.FC = () => {
     username: '',
     password: '',
     email: '',
-    role: 'USER' as Role,
+    roles: [] as Role[],
     id_satker: '',
     nip: '',
     jabatan: '',
@@ -88,7 +88,7 @@ export const ManajemenUser: React.FC = () => {
       username: '',
       password: '',
       email: '',
-      role: 'USER',
+      roles: ['USER'],
       id_satker: '',
       nip: '',
       jabatan: '',
@@ -134,7 +134,7 @@ export const ManajemenUser: React.FC = () => {
       await updateUser(selectedUser.id, {
         nama: formData.nama,
         nip: formData.nip,
-        role: formData.role,
+        roles: formData.roles,
         id_satker: formData.id_satker ? Number(formData.id_satker) : undefined,
         jabatan: formData.jabatan,
         gol_ruang: formData.gol_ruang,
@@ -346,7 +346,7 @@ export const ManajemenUser: React.FC = () => {
                                 username: '',
                                 password: '',
                                 email: user.email || '',
-                                role: user.role,
+                                roles: user.roles || (user.role ? [user.role] : []),
                                 id_satker: (user.id_satker ?? user.satker_id)?.toString() || '',
                                 nip: user.nip || '',
                                 jabatan: user.jabatan || '',
@@ -492,14 +492,30 @@ export const ManajemenUser: React.FC = () => {
               <Label>Email</Label>
               <Input type="email" placeholder="email@instansi.go.id" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-12 rounded-xl" />
             </div>
-            <div className="space-y-2">
-              <Label>Role Akses</Label>
-              <Select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                options={config?.allowed_roles || []}
-                className="h-12"
-              />
+            <div className="space-y-3 col-span-full">
+              <Label>Role Akses (Dapat pilih lebih dari 1)</Label>
+              <div className="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-xl border border-border">
+                {config?.allowed_roles.map((r: any) => (
+                  <label key={r.value} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20 transition-all cursor-pointer"
+                      checked={formData.roles.includes(r.value as Role)}
+                      onChange={(e) => {
+                        const val = r.value as Role;
+                        if (e.target.checked) {
+                          setFormData({ ...formData, roles: [...formData.roles, val] });
+                        } else {
+                          setFormData({ ...formData, roles: formData.roles.filter(i => i !== val) });
+                        }
+                      }}
+                    />
+                    <span className="text-[0.75rem] font-bold text-text-header group-hover:text-accent transition-colors">
+                      {r.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
           {/* Row 4: Satker + Jabatan */}
@@ -585,14 +601,30 @@ export const ManajemenUser: React.FC = () => {
               <Label>Email</Label>
               <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="h-12 rounded-xl" />
             </div>
-            <div className="space-y-2">
-              <Label>Role Akses</Label>
-              <Select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                options={config?.allowed_roles || []}
-                className="h-12"
-              />
+            <div className="space-y-3 col-span-full">
+              <Label>Role Akses (Dapat pilih lebih dari 1)</Label>
+              <div className="flex flex-wrap gap-3 p-4 bg-slate-50 rounded-xl border border-border">
+                {config?.allowed_roles.map((r: any) => (
+                  <label key={r.value} className="flex items-center gap-2 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-border text-accent focus:ring-accent/20 transition-all cursor-pointer"
+                      checked={formData.roles.includes(r.value as Role)}
+                      onChange={(e) => {
+                        const val = r.value as Role;
+                        if (e.target.checked) {
+                          setFormData({ ...formData, roles: [...formData.roles, val] });
+                        } else {
+                          setFormData({ ...formData, roles: formData.roles.filter(i => i !== val) });
+                        }
+                      }}
+                    />
+                    <span className="text-[0.75rem] font-bold text-text-header group-hover:text-accent transition-colors">
+                      {r.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

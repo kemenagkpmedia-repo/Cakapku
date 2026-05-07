@@ -21,7 +21,8 @@ export interface User {
 }
 
 export interface UIConfig {
-  role: Role;
+  active_role: Role;
+  all_roles: Role[];
   menus: any[];
   allowed_roles: { label: string; value: string }[];
   dashboard_path: string;
