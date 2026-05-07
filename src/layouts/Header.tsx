@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useSatkerStore } from '../store/satkerStore';
-import { User, LogOut, ChevronDown, UserCircle, Menu, X, ArrowLeftCircle } from 'lucide-react';
+import { User, LogOut, ChevronDown, UserCircle, Menu, X } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useUIStore } from '../store/uiStore';
 
 export const Header: React.FC = () => {
-  const { user, originalAdmin, logout, stopImpersonation } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { satkers } = useSatkerStore();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -30,16 +30,9 @@ export const Header: React.FC = () => {
     navigate('/login');
   };
 
-  const handleStopImpersonation = () => {
-    stopImpersonation();
-    navigate('/admin/users');
-  };
 
   return (
-    <header className={cn(
-      "h-20 glass-panel border-b border-white/10 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-50",
-      originalAdmin && "bg-amber-50/80 border-amber-200"
-    )}>
+    <header className="h-20 glass-panel border-b border-white/10 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-50">
       <div className="flex items-center gap-4">
         {/* Mobile Menu Toggle */}
         <button 
@@ -62,12 +55,6 @@ export const Header: React.FC = () => {
               <div className="w-1 h-1 rounded-full bg-border" />
               <div className="flex items-center gap-2">
                 <span className="text-[0.65rem] font-bold text-text-muted/60 uppercase tracking-[0.1em]">{user?.role}</span>
-                {originalAdmin && (
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[0.6rem] font-black border border-amber-200">
-                    <span className="animate-pulse w-1 h-1 rounded-full bg-amber-500" />
-                    IMPERSONATING
-                  </div>
-                )}
               </div>
             </div>
             {satker && (
@@ -77,15 +64,6 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          {originalAdmin && (
-            <button
-              onClick={handleStopImpersonation}
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-amber-200 text-amber-700 text-[0.7rem] font-black uppercase tracking-widest hover:bg-amber-100 transition-all shadow-sm"
-            >
-              <ArrowLeftCircle className="w-4 h-4" />
-              Keluar Sesi
-            </button>
-          )}
         </div>
       </div>
 

@@ -10,7 +10,7 @@ import { useUserStore } from '../../store/userStore';
 import { useSatkerStore } from '../../store/satkerStore';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, FileUp, FileDown, Search, Edit3, Trash2, AlertTriangle, LogIn, Shield, Building2 } from 'lucide-react';
+import { Users, Plus, FileUp, FileDown, Search, Edit3, Trash2, AlertTriangle, Shield, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Role } from '../../store/authStore';
 import { cn } from '../../utils/cn';
@@ -18,7 +18,7 @@ import { cn } from '../../utils/cn';
 export const ManajemenUser: React.FC = () => {
   const { users, isLoading, fetchUsers, addUser, addUsers, updateUser, deleteUser } = useUserStore();
   const { satkers, fetchSatkers } = useSatkerStore();
-  const { logout, loginAs } = useAuthStore();
+  const { user: currentUser, config, logout } = useAuthStore();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -203,18 +203,6 @@ export const ManajemenUser: React.FC = () => {
     return satkers.find(s => s.id === id)?.nama_satker || satkers.find(s => s.id === id)?.name || '-';
   };
 
-  const handleLoginAs = (user: any) => {
-    loginAs(user);
-
-    // Normalize role — backend returns UPPERCASE, support both formats
-    switch ((user.role || '').toLowerCase()) {
-      case 'admin':    navigate('/admin/users');       break;
-      case 'operator': navigate('/operator/periode');  break;
-      case 'user':     navigate('/user/kinerja');      break;
-      case 'pimpinan': navigate('/pimpinan/dashboard'); break;
-      default:         navigate('/login');
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-12">
@@ -344,13 +332,6 @@ export const ManajemenUser: React.FC = () => {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-end gap-1.5 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                          <button
-                            onClick={() => handleLoginAs(user)}
-                            title="Login As"
-                            className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-colors border border-transparent hover:border-emerald-100"
-                          >
-                            <LogIn className="w-4.5 h-4.5" />
-                          </button>
                           <button
                             onClick={() => {
                               setSelectedUser(user);
@@ -507,12 +488,7 @@ export const ManajemenUser: React.FC = () => {
               <Select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                options={[
-                  { label: 'User', value: 'USER' },
-                  { label: 'Operator', value: 'OPERATOR' },
-                  { label: 'Pimpinan', value: 'PIMPINAN' },
-                  { label: 'Admin', value: 'ADMIN' },
-                ]}
+                options={config?.allowed_roles || []}
                 className="h-12"
               />
             </div>
@@ -604,12 +580,7 @@ export const ManajemenUser: React.FC = () => {
               <Select
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
-                options={[
-                  { label: 'User', value: 'USER' },
-                  { label: 'Operator', value: 'OPERATOR' },
-                  { label: 'Pimpinan', value: 'PIMPINAN' },
-                  { label: 'Admin', value: 'ADMIN' },
-                ]}
+                options={config?.allowed_roles || []}
                 className="h-12"
               />
             </div>

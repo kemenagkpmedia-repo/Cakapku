@@ -4,11 +4,31 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { motion, AnimatePresence } from 'motion/react';
 import { useUIStore } from '../store/uiStore';
+import { useAuthStore } from '../store/authStore';
 import { cn } from '../utils/cn';
 
 export const MainLayout: React.FC = () => {
+  const { user, login, isAuthenticated } = useAuthStore();
   const location = useLocation();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+
+  // Fetch current user and config on mount if authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      import('../api/axios').then(({ default: api }) => {
+        api.get('/me').then(res => {
+          const { user: updatedUser, config: updatedConfig } = res.data;
+          // Reuse existing login method to update store
+          const { token } = useAuthStore.getState();
+          if (token && updatedUser && updatedConfig) {
+            login(updatedUser, token, updatedConfig);
+          }
+        }).catch(err => {
+          console.error('Failed to fetch user config:', err);
+        });
+      });
+    }
+  }, [isAuthenticated, login]);
 
   // Close sidebar on mobile when navigating
   useEffect(() => {

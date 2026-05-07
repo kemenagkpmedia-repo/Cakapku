@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type Role = 'ADMIN' | 'OPERATOR' | 'USER' | 'PIMPINAN';
+export type Role = 'SUPER ADMIN' | 'ADMIN' | 'OPERATOR' | 'USER' | 'PIMPINAN';
 
 export interface User {
   id: number;
@@ -20,26 +20,36 @@ export interface User {
   address?: string;
 }
 
+export interface UIConfig {
+  role: Role;
+  menus: any[];
+  allowed_roles: { label: string; value: string }[];
+  dashboard_path: string;
+}
+
 interface AuthState {
   user: User | null;
+  config: UIConfig | null;
   originalAdmin: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: User, token: string, config: UIConfig) => void;
   loginAs: (user: User) => void;
   stopImpersonation: () => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  updateConfig: (config: UIConfig) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      config: null,
       originalAdmin: null,
       token: null,
       isAuthenticated: false,
-      login: (user, token) => set({ user, token, isAuthenticated: true, originalAdmin: null }),
+      login: (user, token, config) => set({ user, token, config, isAuthenticated: true, originalAdmin: null }),
       loginAs: (targetUser) => set((state) => ({
         originalAdmin: state.originalAdmin || state.user,
         user: targetUser
@@ -48,10 +58,11 @@ export const useAuthStore = create<AuthState>()(
         user: state.originalAdmin || state.user,
         originalAdmin: null
       })),
-      logout: () => set({ user: null, originalAdmin: null, token: null, isAuthenticated: false }),
+      logout: () => set({ user: null, config: null, originalAdmin: null, token: null, isAuthenticated: false }),
       updateUser: (userData) => set((state) => ({
         user: state.user ? { ...state.user, ...userData } : null
       })),
+      updateConfig: (config) => set({ config }),
     }),
     {
       name: 'auth-storage', // name of the item in the storage (must be unique)

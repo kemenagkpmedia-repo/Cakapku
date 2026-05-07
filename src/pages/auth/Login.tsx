@@ -34,8 +34,9 @@ export const Login: React.FC = () => {
         password: data.password
       });
 
-      const token = response.data.token || response.data.access_token || response.data.data?.token;
+      const token = response.data.access_token || response.data.token || response.data.data?.token;
       const user = response.data.user || response.data.data?.user;
+      const config = response.data.config || response.data.data?.config;
 
       if (!token) {
         throw new Error('Token tidak ditemukan dalam respon API');
@@ -45,9 +46,12 @@ export const Login: React.FC = () => {
       const role = (user.role || '').toUpperCase() as Role;
       const normalizedUser = { ...user, role };
 
-      login(normalizedUser, token);
+      login(normalizedUser, token, config);
       setIsLoading(false);
-      navigate(getDashboardPath(role));
+      
+      // Gunakan path dari backend jika tersedia, jika tidak pakai fallback
+      const targetPath = config?.dashboard_path || getDashboardPath(role);
+      navigate(targetPath);
     } catch (error: any) {
       setIsLoading(false);
       console.error('Login failed:', error);

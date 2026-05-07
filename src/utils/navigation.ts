@@ -4,6 +4,7 @@ export const getDashboardPath = (role: Role | string | undefined): string => {
   const normalizedRole = (role || '').toUpperCase();
   
   switch (normalizedRole) {
+    case 'SUPER ADMIN':
     case 'ADMIN':
       return '/admin/users';
     case 'OPERATOR':

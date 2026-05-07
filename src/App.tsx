@@ -28,7 +28,9 @@ const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
   
   if (isAuthenticated && user) {
-    return <Navigate to={getDashboardPath(user.role)} replace />;
+    const { config } = useAuthStore.getState();
+    const targetPath = config?.dashboard_path || getDashboardPath(user.role);
+    return <Navigate to={targetPath} replace />;
   }
   
   return <Navigate to="/login" replace />;
@@ -49,13 +51,13 @@ export default function App() {
         <Route element={<MainLayout />}>
           
           {/* Admin Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['SUPER ADMIN', 'ADMIN']} />}>
             <Route path="/admin/users" element={<ManajemenUser />} />
             <Route path="/admin/satker" element={<ManajemenSatker />} />
           </Route>
 
           {/* Operator Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['OPERATOR']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['SUPER ADMIN', 'OPERATOR']} />}>
             <Route path="/operator/perkin" element={<ManajemenPerkin />} />
             <Route path="/operator/sk" element={<ManajemenSk />} />
             <Route path="/operator/iksk" element={<ManajemenIksk />} />
@@ -65,7 +67,7 @@ export default function App() {
           </Route>
 
           {/* User Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['USER', 'PIMPINAN']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['SUPER ADMIN', 'USER', 'PIMPINAN']} />}>
             <Route path="/user/kinerja" element={<InputKinerja />} />
             <Route path="/user/riwayat" element={<RiwayatKinerja />} />
             <Route path="/user/biodata" element={<Biodata />} />

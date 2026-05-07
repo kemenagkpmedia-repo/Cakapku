@@ -23,7 +23,7 @@ import {
 import { cn } from '../utils/cn';
 
 export const Sidebar: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, config } = useAuthStore();
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
@@ -34,45 +34,21 @@ export const Sidebar: React.FC = () => {
     );
   };
 
+  const iconMap: Record<string, any> = {
+    Users, Building, FileText, CheckSquare, BarChart3, LogOut, LayoutDashboard, User, Calendar, Target, Activity, Upload
+  };
+
   const getLinks = () => {
-    switch ((user?.role || '').toUpperCase()) {
-      case 'ADMIN':
-        return [
-          { to: '/admin/users', icon: Users, label: 'Manajemen User' },
-          { to: '/admin/satker', icon: Building, label: 'Manajemen Satker' },
-        ];
-      case 'OPERATOR':
-        return [
-          { to: '/operator/periode', icon: Calendar, label: 'Manajemen Periode' },
-          { 
-            label: 'Perjanjian Kinerja', 
-            icon: FileText,
-            children: [
-              { to: '/operator/perkin', icon: Upload, label: 'Import Perkin' },
-              { to: '/operator/sk', icon: Target, label: 'Sasaran Kegiatan (SK)' },
-              { to: '/operator/iksk', icon: Activity, label: 'Indikator Kinerja (IKSK)' },
-            ]
-          },
-          { to: '/operator/perkin-satker', icon: Building, label: 'Plotting Satker' },
-          { to: '/operator/export', icon: BarChart3, label: 'Export Data' },
-        ];
-      case 'USER':
-        return [
-          { to: '/user/kinerja', icon: FileText, label: 'Input Kinerja' },
-          { to: '/user/riwayat', icon: CheckSquare, label: 'Riwayat Kinerja' },
-          { to: '/user/export', icon: BarChart3, label: 'Export LKB' },
-        ];
-      case 'PIMPINAN':
-        return [
-          { to: '/pimpinan/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-          { to: '/pimpinan/monitoring', icon: Users, label: 'Monitoring Bawahan' },
-          { to: '/user/kinerja', icon: FileText, label: 'Input Kinerja' },
-          { to: '/user/riwayat', icon: CheckSquare, label: 'Riwayat Kinerja' },
-          { to: '/user/export', icon: BarChart3, label: 'Export LKB' },
-        ];
-      default:
-        return [];
-    }
+    if (!config?.menus) return [];
+    
+    return config.menus.map((menu: any) => ({
+      ...menu,
+      icon: iconMap[menu.icon] || FileText,
+      children: menu.children?.map((child: any) => ({
+        ...child,
+        icon: iconMap[child.icon] || FileText
+      }))
+    }));
   };
 
   const links = getLinks();
