@@ -328,7 +328,11 @@ export const ManajemenUser: React.FC = () => {
                         <div className="space-y-1.5">
                           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/5 text-accent border border-accent/10">
                             <Shield className="w-3 h-3" />
-                            <span className="text-[0.65rem] font-black uppercase tracking-wider">{user.role}</span>
+                            <span className="text-[0.65rem] font-black uppercase tracking-wider">
+                              {user.assigned_roles && user.assigned_roles.length > 0 
+                                ? user.assigned_roles.join(', ') 
+                                : user.role}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-[0.8rem] font-semibold text-text-main">
                             <Building2 className="w-3.5 h-3.5 text-text-muted" />
@@ -346,7 +350,7 @@ export const ManajemenUser: React.FC = () => {
                                 username: '',
                                 password: '',
                                 email: user.email || '',
-                                roles: user.roles || (user.role ? [user.role] : []),
+                                roles: user.assigned_roles || (user.role ? [user.role] : []),
                                 id_satker: (user.id_satker ?? user.satker_id)?.toString() || '',
                                 nip: user.nip || '',
                                 jabatan: user.jabatan || '',

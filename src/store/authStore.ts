@@ -18,6 +18,7 @@ export interface User {
   golongan?: string;
   phone?: string;
   address?: string;
+  assigned_roles?: Role[];
 }
 
 export interface UIConfig {
