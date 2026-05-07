@@ -8,17 +8,21 @@ import { useAuthStore } from '../store/authStore';
 import { cn } from '../utils/cn';
 
 export const MainLayout: React.FC = () => {
-  const { user, login, isAuthenticated } = useAuthStore();
+  const { user, login, isAuthenticated, config } = useAuthStore();
   const location = useLocation();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+  const hasFetched = React.useRef(false);
 
-  // Fetch current user and config on mount if authenticated
+  // Fetch current user and config ONLY on first mount
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !hasFetched.current) {
+      hasFetched.current = true;
       import('../api/axios').then(({ default: api }) => {
-        api.get('/me').then(res => {
+        // Kirim active_role saat ini agar backend tidak reset ke default
+        const activeRole = useAuthStore.getState().config?.active_role;
+        const params = activeRole ? `?role=${activeRole}` : '';
+        api.get(`/me${params}`).then(res => {
           const { user: updatedUser, config: updatedConfig } = res.data;
-          // Reuse existing login method to update store
           const { token } = useAuthStore.getState();
           if (token && updatedUser && updatedConfig) {
             login(updatedUser, token, updatedConfig);
@@ -28,7 +32,7 @@ export const MainLayout: React.FC = () => {
         });
       });
     }
-  }, [isAuthenticated, login]);
+  }, [isAuthenticated]);
 
   // Close sidebar on mobile when navigating
   useEffect(() => {
