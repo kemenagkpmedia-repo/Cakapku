@@ -66,12 +66,16 @@ export default function App() {
             <Route path="/operator/export" element={<PlaceholderPage title="Export Laporan" />} />
           </Route>
 
-          {/* User Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['SUPER ADMIN', 'USER', 'PIMPINAN']} />}>
+          {/* User Routes (Hanya untuk role USER) */}
+          <Route element={<ProtectedRoute allowedRoles={['USER']} />}>
             <Route path="/user/kinerja" element={<InputKinerja />} />
             <Route path="/user/riwayat" element={<RiwayatKinerja />} />
-            <Route path="/user/biodata" element={<Biodata />} />
             <Route path="/user/export" element={<ExportLKB />} />
+          </Route>
+
+          {/* Biodata (Bisa diakses semua role) */}
+          <Route element={<ProtectedRoute allowedRoles={['SUPER ADMIN', 'ADMIN', 'OPERATOR', 'USER', 'PIMPINAN']} />}>
+            <Route path="/user/biodata" element={<Biodata />} />
           </Route>
 
           {/* Pimpinan Routes */}

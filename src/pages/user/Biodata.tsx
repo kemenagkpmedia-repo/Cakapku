@@ -16,6 +16,8 @@ export const Biodata: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  if (!user) return null;
+
   const { register, handleSubmit, formState: { errors } } = useForm<Partial<User>>({
     defaultValues: {
       name: user?.name || '',
@@ -77,13 +79,13 @@ export const Biodata: React.FC = () => {
             <CardContent className="pt-10 pb-8 flex flex-col items-center text-center px-6">
               <div className="relative mb-6">
                 <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white text-4xl font-extrabold shadow-2xl shadow-accent/30 border-4 border-white transform transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
-                  {user?.name.charAt(0).toUpperCase()}
+                  {(user?.name || user?.nama || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-border shadow-lg flex items-center justify-center">
                   <UserIcon className="w-5 h-5 text-accent" />
                 </div>
               </div>
-              <h2 className="text-xl font-extrabold text-text-header tracking-tight">{user?.name}</h2>
+              <h2 className="text-xl font-extrabold text-text-header tracking-tight">{user?.name || user?.nama || 'Pengguna'}</h2>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/5 text-accent text-[0.65rem] font-bold uppercase tracking-widest mt-2 border border-accent/10">
                 {user?.role}
               </div>

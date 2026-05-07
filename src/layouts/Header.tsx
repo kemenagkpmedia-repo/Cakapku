@@ -126,16 +126,14 @@ export const Header: React.FC = () => {
             </div>
             
             <div className="px-2 space-y-0.5">
-              {config?.active_role === 'USER' && (
-                <Link 
-                  to="/user/biodata" 
-                  className="flex items-center gap-3 px-3 py-2.5 text-[0.8125rem] font-semibold text-text-main hover:bg-accent/5 hover:text-accent rounded-xl transition-all group"
-                  onClick={() => setIsDropdownOpen(false)}
-                >
-                  <UserCircle className="w-4 h-4 text-text-muted group-hover:text-accent transition-colors" />
-                  Profil & Biodata
-                </Link>
-              )}
+              <Link 
+                to="/user/biodata" 
+                className="flex items-center gap-3 px-3 py-2.5 text-[0.8125rem] font-semibold text-text-main hover:bg-accent/5 hover:text-accent rounded-xl transition-all group"
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                <UserCircle className="w-4 h-4 text-text-muted group-hover:text-accent transition-colors" />
+                Profil & Biodata
+              </Link>
 
               {/* Role Switcher */}
               {config && config.all_roles.length > 1 && (

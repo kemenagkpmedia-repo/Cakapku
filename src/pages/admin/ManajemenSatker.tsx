@@ -77,8 +77,8 @@ export const ManajemenSatker: React.FC = () => {
 
   const columns = [
     {
-      header: 'ID',
-      accessor: (item: any) => <span className="font-black text-accent">{item.id}</span>,
+      header: 'No.',
+      accessor: (_item: any, index: number) => <span className="font-black text-accent">{index}</span>,
       className: 'w-16 text-center'
     },
     {

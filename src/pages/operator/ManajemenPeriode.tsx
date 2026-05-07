@@ -142,9 +142,6 @@ export const ManajemenPeriode: React.FC = () => {
                           <h3 className={`font-extrabold tracking-tight ${isActive ? 'text-text-header' : 'text-text-muted'}`}>
                             {period.tahun || period.name}
                           </h3>
-                          <p className="text-[0.65rem] font-bold text-text-muted uppercase tracking-widest mt-1">
-                            ID: {period.id}
-                          </p>
                         </div>
                       </div>
 
