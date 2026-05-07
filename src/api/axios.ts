@@ -14,13 +14,25 @@ api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
     const configData = useAuthStore.getState().config;
+    let activeRole = configData?.active_role;
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    if (configData?.active_role) {
-      config.headers['X-Active-Role'] = configData.active_role;
+    // Fallback: Jika store belum ter-hidrasi (misal saat baru reload), ambil langsung dari localStorage
+    if (!activeRole) {
+      try {
+        const storage = localStorage.getItem('auth-storage');
+        if (storage) {
+          const parsed = JSON.parse(storage);
+          activeRole = parsed.state?.config?.active_role;
+        }
+      } catch (e) {}
+    }
+
+    if (activeRole) {
+      config.headers['X-Active-Role'] = activeRole;
     }
 
     return config;

@@ -2,20 +2,33 @@ import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useUIStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import { cn } from '../utils/cn';
 
 export const MainLayout: React.FC = () => {
-  const { user, login, isAuthenticated, config } = useAuthStore();
+  const { user, login, isAuthenticated, config, isSwitching } = useAuthStore();
   const location = useLocation();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+  const [isHydrated, setIsHydrated] = React.useState(false);
   const hasFetched = React.useRef(false);
+
+  // Check for hydration
+  useEffect(() => {
+    const checkHydration = () => {
+      if (useAuthStore.persist.hasHydrated()) {
+        setIsHydrated(true);
+      }
+    };
+    checkHydration();
+    return useAuthStore.persist.onFinishHydration(() => setIsHydrated(true));
+  }, []);
 
   // Fetch current user and config ONLY on first mount
   useEffect(() => {
-    if (isAuthenticated && !hasFetched.current) {
+    if (isAuthenticated && isHydrated && !hasFetched.current) {
       hasFetched.current = true;
       import('../api/axios').then(({ default: api }) => {
         // Kirim active_role saat ini agar backend tidak reset ke default
@@ -32,7 +45,7 @@ export const MainLayout: React.FC = () => {
         });
       });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isHydrated]);
 
   // Close sidebar on mobile when navigating
   useEffect(() => {
@@ -53,6 +66,19 @@ export const MainLayout: React.FC = () => {
       setSidebarCollapsed(true);
     }
   }, [location.pathname, setSidebarCollapsed]);
+
+  if (!isHydrated || (isAuthenticated && !config) || isSwitching) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background overflow-hidden antialiased mesh-bg">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-10 h-10 text-accent animate-spin" />
+          <p className="text-text-muted font-medium animate-pulse">
+            {isSwitching ? 'Menyiapkan akses role baru...' : 'Menyiapkan dashboard...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden antialiased mesh-bg">

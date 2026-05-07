@@ -5,6 +5,7 @@ import { useSatkerStore } from '../store/satkerStore';
 import { User, LogOut, ChevronDown, UserCircle, Menu, X, Shield, RefreshCw } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useUIStore } from '../store/uiStore';
+import api from '../api/axios';
 
 export const Header: React.FC = () => {
   const { user, config, logout, updateConfig, updateUser } = useAuthStore();
@@ -35,18 +36,30 @@ export const Header: React.FC = () => {
     if (role === config?.active_role) return;
     
     setIsSwitching(true);
+    const { setSwitching } = useAuthStore.getState();
+    
     try {
-      const { default: api } = await import('../api/axios');
       const response = await api.post('/switch-role', { role });
-      
       const data = response.data;
+      
+      // Aktifkan mode switching global untuk mencegah trigger ProtectedRoute
+      setSwitching(true);
+      
+      // Update state
       updateConfig(data.config);
       updateUser({ role: data.config.active_role });
-      // Redirect ke dashboard role baru
-      navigate(data.config.dashboard_path);
+      
+      // Tutup dropdown
       setIsDropdownOpen(false);
+      
+      // Beri waktu sebentar agar user melihat transisi loading screen
+      setTimeout(() => {
+        window.location.href = data.config.dashboard_path;
+      }, 500);
+
     } catch (error) {
       console.error('Failed to switch role:', error);
+      setSwitching(false);
     } finally {
       setIsSwitching(false);
     }

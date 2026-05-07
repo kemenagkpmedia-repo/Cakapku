@@ -47,7 +47,6 @@ export const ManajemenUser: React.FC = () => {
     gol_ruang: '',
   });
 
-  console.log(formData.role)
 
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;

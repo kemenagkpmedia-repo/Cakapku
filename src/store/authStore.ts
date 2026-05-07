@@ -41,6 +41,8 @@ interface AuthState {
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
   updateConfig: (config: UIConfig) => void;
+  isSwitching: boolean;
+  setSwitching: (val: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -65,9 +67,15 @@ export const useAuthStore = create<AuthState>()(
         user: state.user ? { ...state.user, ...userData } : null
       })),
       updateConfig: (config) => set({ config }),
+      isSwitching: false,
+      setSwitching: (isSwitching) => set({ isSwitching }),
     }),
     {
       name: 'auth-storage', // name of the item in the storage (must be unique)
+      partialize: (state) => 
+        Object.fromEntries(
+          Object.entries(state).filter(([key]) => !['isSwitching'].includes(key))
+        ) as AuthState,
     }
   )
 );
