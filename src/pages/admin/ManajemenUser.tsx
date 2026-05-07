@@ -10,7 +10,7 @@ import { useUserStore } from '../../store/userStore';
 import { useSatkerStore } from '../../store/satkerStore';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, FileUp, FileDown, Search, Edit3, Trash2, AlertTriangle, Shield, Building2 } from 'lucide-react';
+import { Users, Plus, FileUp, FileDown, Search, Edit3, Trash2, AlertTriangle, Shield, Building2, Eye, EyeOff } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Role } from '../../store/authStore';
 import { cn } from '../../utils/cn';
@@ -26,6 +26,7 @@ export const ManajemenUser: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -141,6 +142,7 @@ export const ManajemenUser: React.FC = () => {
         password: formData.password.trim() || undefined,
       });
       resetForm();
+      setShowPassword(false);
       setSelectedUser(null);
       setIsEditModalOpen(false);
     } catch (err: any) {
@@ -563,7 +565,7 @@ export const ManajemenUser: React.FC = () => {
       {/* Edit Modal */}
       <Modal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={() => { setIsEditModalOpen(false); setShowPassword(false); }}
         title="Edit Profil Pegawai"
         footer={<></>}
       >
@@ -616,13 +618,22 @@ export const ManajemenUser: React.FC = () => {
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label>Ubah Password <span className="text-[0.65rem] text-text-muted italic">(Kosongkan jika tidak ingin merubah)</span></Label>
-              <Input 
-                type="password" 
-                placeholder="Masukkan password baru..." 
-                value={formData.password} 
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
-                className="h-12 rounded-xl" 
-              />
+              <div className="relative group">
+                <Input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Masukkan password baru..." 
+                  value={formData.password} 
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                  className="h-12 rounded-xl pr-12" 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 text-text-muted transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
           {/* Golongan Ruang Edit */}
