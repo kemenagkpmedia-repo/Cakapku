@@ -41,7 +41,8 @@ export interface SubordinateUserResponse {
 }
 
 export const kinerjaService = {
-  getAll: () => api.get<PerformanceRecordResponse[]>('/kinerja-harian'),
+  getAll: (month?: string, year?: string) => 
+    api.get<PerformanceRecordResponse[]>('/kinerja-harian', { params: { month, year } }),
   
   create: (data: KinerjaPayload) => api.post<PerformanceRecordResponse>('/kinerja-harian', data),
   
@@ -51,5 +52,6 @@ export const kinerjaService = {
   delete: (id: number) => api.delete(`/kinerja-harian/${id}`),
   
   // Method ini sekarang mengembalikan daftar User (Bawahan) beserta kinerjanya
-  getBawahanKinerja: () => api.get<SubordinateUserResponse[]>('/kinerja-harian/bawahan'),
+  getBawahanKinerja: (month?: string, year?: string) => 
+    api.get<SubordinateUserResponse[]>('/kinerja-harian/bawahan', { params: { month, year } }),
 };

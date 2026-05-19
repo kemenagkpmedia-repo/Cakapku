@@ -43,17 +43,9 @@ export const RiwayatKinerja: React.FC = () => {
     return result;
   }, []);
 
-  const filteredRecords = useMemo(() => {
-    return records.filter(record => {
-      if (!record.tanggal) return false;
-      const [year, month] = record.tanggal.split('-');
-      return year === filterYear && month === filterMonth;
-    });
-  }, [records, filterMonth, filterYear]);
-
   useEffect(() => {
-    fetchKinerja();
-  }, [fetchKinerja]);
+    fetchKinerja(filterMonth, filterYear);
+  }, [fetchKinerja, filterMonth, filterYear]);
 
   const handleEdit = (id: number) => {
     setEditingId(id);
@@ -90,7 +82,7 @@ export const RiwayatKinerja: React.FC = () => {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex justify-center sm:justify-end gap-3">
           <Button
             variant="outline"
-            onClick={fetchKinerja}
+            onClick={() => fetchKinerja(filterMonth, filterYear)}
             className="rounded-xl h-12 px-4 font-bold border-border"
             title="Refresh"
           >
@@ -108,7 +100,7 @@ export const RiwayatKinerja: React.FC = () => {
       {error && (
         <div className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
-          <button onClick={fetchKinerja} className="ml-auto"><RefreshCw className="w-4 h-4" /></button>
+          <button onClick={() => fetchKinerja(filterMonth, filterYear)} className="ml-auto"><RefreshCw className="w-4 h-4" /></button>
         </div>
       )}
 
@@ -196,7 +188,7 @@ export const RiwayatKinerja: React.FC = () => {
               className: 'w-32 text-center'
             }
           ]}
-          data={filteredRecords}
+          data={records}
           isLoading={isLoading}
           searchPlaceholder="Cari riwayat pekerjaan..."
           searchKey={(item) => `${item.uraian_pekerjaan} ${item.tanggal}`}

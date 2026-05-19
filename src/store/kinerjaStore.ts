@@ -48,7 +48,7 @@ interface KinerjaState {
   error: string | null;
   editingId: number | null;
 
-  fetchKinerja: () => Promise<void>;
+  fetchKinerja: (month?: string, year?: string) => Promise<void>;
   addRecord: (data: {
     tanggal: string;
     id_iksk: number;
@@ -61,7 +61,7 @@ interface KinerjaState {
   }) => Promise<void>;
   deleteRecord: (id: number) => Promise<void>;
   setEditingId: (id: number | null) => void;
-  fetchBawahanKinerja: () => Promise<void>;
+  fetchBawahanKinerja: (month?: string, year?: string) => Promise<void>;
 }
 
 // ─── Helper: map raw API response to UI-friendly shape ───────────────────────
@@ -93,10 +93,10 @@ export const useKinerjaStore = create<KinerjaState>()((set) => ({
   error: null,
   editingId: null,
 
-  fetchKinerja: async () => {
+  fetchKinerja: async (month, year) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await kinerjaService.getAll();
+      const res = await kinerjaService.getAll(month, year);
       const raw = (res.data as any)?.data || res.data || [];
       set({ records: raw.map(mapRecord), isLoading: false });
     } catch (err: any) {
@@ -125,10 +125,10 @@ export const useKinerjaStore = create<KinerjaState>()((set) => ({
 
   setEditingId: (id) => set({ editingId: id }),
 
-  fetchBawahanKinerja: async () => {
+  fetchBawahanKinerja: async (month, year) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await kinerjaService.getBawahanKinerja();
+      const res = await kinerjaService.getBawahanKinerja(month, year);
       const raw = (res.data as any)?.data || res.data || [];
       // raw is a list of users, each has kinerja_harians
       const usersWithMappedRecords = raw.map((u: any) => ({

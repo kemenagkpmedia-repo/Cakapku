@@ -39,26 +39,18 @@ export const MonitoringKinerja: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchBawahanKinerja();
-  }, [fetchBawahanKinerja]);
+    fetchBawahanKinerja(filterMonth, filterYear);
+  }, [fetchBawahanKinerja, filterMonth, filterYear]);
 
   // Processing for the list view
   const subordinates = useMemo(() => {
-    return bawahanUsers.map(user => {
-      const filtered = (user.records || []).filter((r: any) => {
-        if (!r.tanggal) return false;
-        const [year, month] = r.tanggal.split('-');
-        return year === filterYear && month === filterMonth;
-      });
-
-      return {
-        ...user,
-        totalReports: filtered.length,
-        latestReport: filtered[0]?.tanggal || 'Belum Ada',
-        filteredRecords: filtered
-      };
-    });
-  }, [bawahanUsers, filterMonth, filterYear]);
+    return bawahanUsers.map(user => ({
+      ...user,
+      totalReports: user.records?.length || 0,
+      latestReport: user.records?.[0]?.tanggal || 'Belum Ada',
+      filteredRecords: user.records || []
+    }));
+  }, [bawahanUsers]);
 
   const selectedUser = useMemo(() => {
     if (!selectedUserId) return null;
@@ -154,7 +146,7 @@ export const MonitoringKinerja: React.FC = () => {
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            onClick={fetchBawahanKinerja}
+            onClick={() => fetchBawahanKinerja(filterMonth, filterYear)}
             className="rounded-xl h-12 w-12 p-0 font-bold border-border bg-white"
             title="Refresh Data"
           >
