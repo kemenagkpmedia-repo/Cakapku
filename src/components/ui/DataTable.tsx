@@ -152,7 +152,7 @@ export function DataTable<T extends { id: string | number }>({
                   ))}
                   {actions && (
                     <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-1.5 translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+                      <div className="flex items-center justify-end gap-1.5 transition-all duration-300">
                         {actions(item)}
                       </div>
                     </td>
