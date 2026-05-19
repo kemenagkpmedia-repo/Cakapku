@@ -18,6 +18,7 @@ import { ManajemenIksk } from './pages/operator/ManajemenIksk';
 import { ManajemenSk } from './pages/operator/ManajemenSk';
 import { ManajemenPeriode } from './pages/operator/ManajemenPeriode';
 import { ManajemenPerkinSatker } from './pages/operator/ManajemenPerkinSatker';
+import { ExportLaporan } from './pages/operator/ExportLaporan';
 import { ManajemenUser } from './pages/admin/ManajemenUser';
 import { ManajemenSatker } from './pages/admin/ManajemenSatker';
 import { Unauthorized, PlaceholderPage } from './pages/Unauthorized';
@@ -63,7 +64,7 @@ export default function App() {
             <Route path="/operator/iksk" element={<ManajemenIksk />} />
             <Route path="/operator/periode" element={<ManajemenPeriode />} />
             <Route path="/operator/perkin-satker" element={<ManajemenPerkinSatker />} />
-            <Route path="/operator/export" element={<PlaceholderPage title="Export Laporan" />} />
+            <Route path="/operator/export" element={<ExportLaporan />} />
           </Route>
 
           {/* User Routes (Hanya untuk role USER) */}
