@@ -51,6 +51,12 @@ export const ExportLKB: React.FC = () => {
   const [showSignature, setShowSignature] = useState<boolean>(true);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
 
+  // TTE Anchor States
+  const [enableAnchorAtasan, setEnableAnchorAtasan] = useState<boolean>(false);
+  const [anchorAtasanText, setAnchorAtasanText] = useState<string>('$ttd_atasan');
+  const [enableAnchorPegawai, setEnableAnchorPegawai] = useState<boolean>(false);
+  const [anchorPegawaiText, setAnchorPegawaiText] = useState<string>('$ttd_pegawai');
+
   // Supervisor and Employee details for signature autofill
   const [customAtasanName, setCustomAtasanName] = useState<string>('');
   const [customAtasanNip, setCustomAtasanNip] = useState<string>('');
@@ -153,7 +159,11 @@ export const ExportLKB: React.FC = () => {
           signature_date: customSignatureDate,
           fontSize: fontSize,
           orientation: orientation,
-          columns: JSON.stringify(showColumns)
+          columns: JSON.stringify(showColumns),
+          enable_anchor_atasan: enableAnchorAtasan,
+          anchor_atasan_text: anchorAtasanText,
+          enable_anchor_pegawai: enableAnchorPegawai,
+          anchor_pegawai_text: anchorPegawaiText
         },
         responseType: 'blob'
       });
@@ -161,16 +171,16 @@ export const ExportLKB: React.FC = () => {
       // Create a local URL representing the PDF binary blob
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const downloadUrl = window.URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       const fileName = `LKB_${selectedMonthName}_${selectedYear}_${customPegawaiName.replace(/\s+/g, '_')}.pdf`;
       link.setAttribute('download', fileName);
-      
+
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up DOM and URL resource
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
@@ -820,7 +830,12 @@ export const ExportLKB: React.FC = () => {
                     <div>
                       <p>Mengetahui,</p>
                       <p>Atasan Langsung</p>
-                      <div className="h-24 flex items-end justify-center">
+                      <div className="h-24 flex items-end justify-center relative">
+                        {enableAnchorAtasan && (
+                          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none text-[0.65rem] text-slate-800">
+                            {anchorAtasanText}
+                          </span>
+                        )}
                         {/* Placeholder signature area */}
                         <div className="w-40 border-b border-dashed border-slate-300/40 no-print" />
                       </div>
@@ -834,7 +849,12 @@ export const ExportLKB: React.FC = () => {
                     <div>
                       <p>{customSignatureDate || 'Kulon Progo, ........................................'}</p>
                       <p>{customPegawaiJabatan || 'Pegawai Negeri Sipil'},</p>
-                      <div className="h-24 flex items-end justify-center">
+                      <div className="h-24 flex items-end justify-center relative">
+                        {enableAnchorPegawai && (
+                          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none text-[0.65rem] text-slate-800">
+                            {anchorPegawaiText}
+                          </span>
+                        )}
                         {/* Placeholder signature area */}
                         <div className="w-40 border-b border-dashed border-slate-300/40 no-print" />
                       </div>
@@ -871,6 +891,69 @@ export const ExportLKB: React.FC = () => {
 
             )}
           </div>
+
+          {/* Anchor TTE Settings (Below Preview) */}
+          <Card className="rounded-3xl border-border shadow-sm overflow-hidden bg-white mt-6 no-print">
+            <CardHeader className="border-b border-border/50 px-6 py-4 bg-slate-50/50">
+              <CardTitle className="text-sm font-extrabold flex items-center gap-2.5 text-text-header">
+                <Settings className="w-4 h-4 text-accent" />
+                Pengaturan Anchor TTE (Tanda Tangan Elektronik)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Atasan Anchor */}
+                <div className="space-y-3 p-4 rounded-2xl border border-slate-100 bg-slate-50/30">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="toggle-anchor-atasan" className="text-xs font-bold text-slate-700 cursor-pointer">
+                      Anchor TTE Atasan
+                    </Label>
+                    <input
+                      type="checkbox"
+                      id="toggle-anchor-atasan"
+                      checked={enableAnchorAtasan}
+                      onChange={(e) => setEnableAnchorAtasan(e.target.checked)}
+                      className="w-4 h-4 rounded text-accent focus:ring-accent accent-accent cursor-pointer"
+                    />
+                  </div>
+                  {enableAnchorAtasan && (
+                    <Input
+                      type="text"
+                      value={anchorAtasanText}
+                      onChange={(e) => setAnchorAtasanText(e.target.value)}
+                      placeholder="Contoh: $ttd_atasan"
+                      className="h-10 rounded-xl bg-white border-slate-200 text-xs font-semibold"
+                    />
+                  )}
+                </div>
+
+                {/* Pegawai Anchor */}
+                <div className="space-y-3 p-4 rounded-2xl border border-slate-100 bg-slate-50/30">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="toggle-anchor-pegawai" className="text-xs font-bold text-slate-700 cursor-pointer">
+                      Anchor TTE Pegawai
+                    </Label>
+                    <input
+                      type="checkbox"
+                      id="toggle-anchor-pegawai"
+                      checked={enableAnchorPegawai}
+                      onChange={(e) => setEnableAnchorPegawai(e.target.checked)}
+                      className="w-4 h-4 rounded text-accent focus:ring-accent accent-accent cursor-pointer"
+                    />
+                  </div>
+                  {enableAnchorPegawai && (
+                    <Input
+                      type="text"
+                      value={anchorPegawaiText}
+                      onChange={(e) => setAnchorPegawaiText(e.target.value)}
+                      placeholder="Contoh: $ttd_pegawai"
+                      className="h-10 rounded-xl bg-white border-slate-200 text-xs font-semibold"
+                    />
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
         </div>
 
