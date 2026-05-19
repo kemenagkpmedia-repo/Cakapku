@@ -833,7 +833,7 @@ export const ExportLKB: React.FC = () => {
                     </div>
                     <div>
                       <p>{customSignatureDate || 'Kulon Progo, ........................................'}</p>
-                      <p>Pegawai Negeri Sipil,</p>
+                      <p>{customPegawaiJabatan || 'Pegawai Negeri Sipil'},</p>
                       <div className="h-24 flex items-end justify-center">
                         {/* Placeholder signature area */}
                         <div className="w-40 border-b border-dashed border-slate-300/40 no-print" />
