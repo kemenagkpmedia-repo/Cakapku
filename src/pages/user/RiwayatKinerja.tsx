@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../../components/ui/Card';
@@ -15,6 +15,41 @@ export const RiwayatKinerja: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [filterMonth, setFilterMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [filterYear, setFilterYear] = useState<string>(() => String(new Date().getFullYear()));
+
+  const months = [
+    { value: '01', label: 'Januari' },
+    { value: '02', label: 'Februari' },
+    { value: '03', label: 'Maret' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'Mei' },
+    { value: '06', label: 'Juni' },
+    { value: '07', label: 'Juli' },
+    { value: '08', label: 'Agustus' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'Oktober' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'Desember' }
+  ];
+
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    const result = [];
+    for (let y = current - 4; y <= current + 1; y++) {
+      result.push(String(y));
+    }
+    return result;
+  }, []);
+
+  const filteredRecords = useMemo(() => {
+    return records.filter(record => {
+      if (!record.tanggal) return false;
+      const [year, month] = record.tanggal.split('-');
+      return year === filterYear && month === filterMonth;
+    });
+  }, [records, filterMonth, filterYear]);
 
   useEffect(() => {
     fetchKinerja();
@@ -77,6 +112,34 @@ export const RiwayatKinerja: React.FC = () => {
         </div>
       )}
 
+      {/* Month & Year Filter Toolbar */}
+      <div className="bg-white p-5 border border-border rounded-3xl shadow-sm flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex-1 w-full space-y-1.5">
+          <label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Filter Bulan Laporan</label>
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-semibold focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
+          >
+            {months.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1 w-full space-y-1.5">
+          <label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Filter Tahun Laporan</label>
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-semibold focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="space-y-4">
         <DataTable
           columns={[
@@ -133,7 +196,7 @@ export const RiwayatKinerja: React.FC = () => {
               className: 'w-32 text-center'
             }
           ]}
-          data={records}
+          data={filteredRecords}
           isLoading={isLoading}
           searchPlaceholder="Cari riwayat pekerjaan..."
           searchKey={(item) => `${item.uraian_pekerjaan} ${item.tanggal}`}

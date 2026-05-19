@@ -9,7 +9,34 @@ import { DataTable } from '../../components/ui/DataTable';
 
 export const MonitoringKinerja: React.FC = () => {
   const { bawahanUsers, isLoading, error, fetchBawahanKinerja } = useKinerjaStore();
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  
+  const [filterMonth, setFilterMonth] = useState<string>(() => String(new Date().getMonth() + 1).padStart(2, '0'));
+  const [filterYear, setFilterYear] = useState<string>(() => String(new Date().getFullYear()));
+
+  const months = [
+    { value: '01', label: 'Januari' },
+    { value: '02', label: 'Februari' },
+    { value: '03', label: 'Maret' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'Mei' },
+    { value: '06', label: 'Juni' },
+    { value: '07', label: 'Juli' },
+    { value: '08', label: 'Agustus' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'Oktober' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'Desember' }
+  ];
+
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    const result = [];
+    for (let y = current - 4; y <= current + 1; y++) {
+      result.push(String(y));
+    }
+    return result;
+  }, []);
 
   useEffect(() => {
     fetchBawahanKinerja();
@@ -17,11 +44,26 @@ export const MonitoringKinerja: React.FC = () => {
 
   // Processing for the list view
   const subordinates = useMemo(() => {
-    return bawahanUsers.map(user => ({
-      ...user,
-      latestReport: user.records?.[0]?.tanggal || 'Belum Ada'
-    }));
-  }, [bawahanUsers]);
+    return bawahanUsers.map(user => {
+      const filtered = (user.records || []).filter((r: any) => {
+        if (!r.tanggal) return false;
+        const [year, month] = r.tanggal.split('-');
+        return year === filterYear && month === filterMonth;
+      });
+
+      return {
+        ...user,
+        totalReports: filtered.length,
+        latestReport: filtered[0]?.tanggal || 'Belum Ada',
+        filteredRecords: filtered
+      };
+    });
+  }, [bawahanUsers, filterMonth, filterYear]);
+
+  const selectedUser = useMemo(() => {
+    if (!selectedUserId) return null;
+    return subordinates.find(u => u.id === selectedUserId) || null;
+  }, [subordinates, selectedUserId]);
 
 
   const columns = [
@@ -92,7 +134,7 @@ export const MonitoringKinerja: React.FC = () => {
           <div className="flex items-center gap-3 mb-2">
              {selectedUser && (
                <button 
-                onClick={() => setSelectedUser(null)}
+                onClick={() => setSelectedUserId(null)}
                 className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center text-text-muted hover:text-accent hover:border-accent/30 transition-all shadow-sm shrink-0"
                >
                  <ArrowLeft className="w-5 h-5" />
@@ -127,6 +169,34 @@ export const MonitoringKinerja: React.FC = () => {
         </div>
       )}
 
+      {/* Month & Year Filter Toolbar */}
+      <div className="bg-white p-5 border border-border rounded-3xl shadow-sm flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex-1 w-full space-y-1.5">
+          <label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Filter Bulan Laporan</label>
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-semibold focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
+          >
+            {months.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex-1 w-full space-y-1.5">
+          <label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Filter Tahun Laporan</label>
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-semibold focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <AnimatePresence mode="wait">
         {!selectedUser ? (
           /* VIEW 1: SUBORDINATE LIST USING DATATABLE */
@@ -145,7 +215,7 @@ export const MonitoringKinerja: React.FC = () => {
               emptyMessage="Pegawai tidak ditemukan di Satker ini."
               actions={(item) => (
                 <button
-                  onClick={() => setSelectedUser(item)}
+                  onClick={() => setSelectedUserId(item.id)}
                   className="p-2.5 rounded-xl text-accent hover:bg-accent/10 transition-all border border-transparent hover:border-accent/10 flex items-center gap-2 font-bold uppercase tracking-widest text-[0.65rem]"
                   title="Lihat Detail Kinerja"
                 >
@@ -234,7 +304,7 @@ export const MonitoringKinerja: React.FC = () => {
                   )
                 }
               ]}
-              data={selectedUser.records || selectedUser.kinerja_harians || []}
+              data={selectedUser.filteredRecords || []}
               isLoading={isLoading}
               searchPlaceholder="Cari uraian pekerjaan..."
               searchKey={(item) => `${item.uraian_pekerjaan} ${item.tanggal}`}
