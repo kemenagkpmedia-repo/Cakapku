@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://172.169.2.222:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://172.169.3.114:3001/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -28,7 +28,7 @@ api.interceptors.request.use(
           const parsed = JSON.parse(storage);
           activeRole = parsed.state?.config?.active_role;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (activeRole) {
