@@ -27,30 +27,30 @@ import { getDashboardPath } from './utils/navigation';
 
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuthStore();
-  
+
   if (isAuthenticated && user) {
     const { config } = useAuthStore.getState();
     const targetPath = config?.dashboard_path || getDashboardPath(user.role);
     return <Navigate to={targetPath} replace />;
   }
-  
+
   return <Navigate to="/login" replace />;
 };
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.VITE_BASE}>
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        
+
         {/* Default Redirect */}
         <Route path="/" element={<RootRedirect />} />
 
         {/* Protected Routes */}
         <Route element={<MainLayout />}>
-          
+
           {/* Admin Routes */}
           <Route element={<ProtectedRoute allowedRoles={['SUPER ADMIN', 'ADMIN']} />}>
             <Route path="/admin/users" element={<ManajemenUser />} />
@@ -88,7 +88,7 @@ export default function App() {
           </Route>
 
         </Route>
-        
+
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
