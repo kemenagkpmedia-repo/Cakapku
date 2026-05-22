@@ -376,13 +376,12 @@ export const ManajemenPerkin: React.FC = () => {
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
-                    isDragOver
+                  className={`border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${isDragOver
                       ? 'border-accent bg-accent/5 scale-[0.98]'
                       : selectedFile
-                      ? 'border-emerald-300 bg-emerald-50/20'
-                      : 'border-border hover:border-accent hover:bg-slate-50'
-                  }`}
+                        ? 'border-emerald-300 bg-emerald-50/20'
+                        : 'border-border hover:border-accent hover:bg-slate-50'
+                    }`}
                 >
                   {selectedFile ? (
                     <div className="flex flex-col items-center text-center space-y-2">
@@ -436,7 +435,7 @@ export const ManajemenPerkin: React.FC = () => {
                   <div className="space-y-1.5">
                     <label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Nama Perkin</label>
                     <Input
-                      placeholder="Masukkan nama perkin (contoh: Perjanjian Kinerja 2026)"
+                      placeholder="Masukkan nama perkin satuan kerja (contoh: Perjanjian Kinerja Kantor Kemenag Kulon Progo)"
                       className="rounded-xl border-border bg-white h-11 px-4 font-semibold text-sm"
                       value={namaPerkin}
                       onChange={(e) => setNamaPerkin(e.target.value)}
