@@ -41,14 +41,38 @@ export const Sidebar: React.FC = () => {
   const getLinks = () => {
     if (!config?.menus) return [];
     
-    return config.menus.map((menu: any) => ({
-      ...menu,
-      icon: iconMap[menu.icon] || FileText,
-      children: menu.children?.map((child: any) => ({
-        ...child,
-        icon: iconMap[child.icon] || FileText
-      }))
-    }));
+    const isSuperAdmin = config.active_role === 'SUPER ADMIN' || user?.role === 'SUPER ADMIN';
+
+    return config.menus
+      .filter((menu: any) => {
+        if (!isSuperAdmin && menu.to === '/admin/satker') {
+          return false;
+        }
+        return true;
+      })
+      .map((menu: any) => {
+        const filteredChildren = menu.children?.filter((child: any) => {
+          if (!isSuperAdmin && child.to === '/admin/satker') {
+            return false;
+          }
+          return true;
+        });
+
+        return {
+          ...menu,
+          icon: iconMap[menu.icon] || FileText,
+          children: filteredChildren?.map((child: any) => ({
+            ...child,
+            icon: iconMap[child.icon] || FileText
+          }))
+        };
+      })
+      .filter((menu: any) => {
+        if (menu.children && menu.children.length === 0) {
+          return false;
+        }
+        return true;
+      });
   };
 
   const links = getLinks();
