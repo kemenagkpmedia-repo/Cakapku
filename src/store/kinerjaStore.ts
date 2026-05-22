@@ -14,6 +14,7 @@ export interface PerformanceRecord {
   // Relasi yang dikembalikan backend (eager load)
   iksk?: {
     id: number;
+    id_sasaran_kegiatan: number;
     indikator: string;
     target_vol?: string;
     target_satuan?: string;
@@ -33,6 +34,7 @@ export interface PerformanceRecord {
   iksk_name?: string;
   perkin_id?: number;
   perkin_name?: string;
+  sasaran_kegiatan_id?: number;
   userName?: string;
   userNip?: string;
   waktu?: string;
@@ -74,6 +76,7 @@ function mapRecord(r: any): PerformanceRecord {
     iksk_name: r.iksk?.indikator || '',
     perkin_id: r.iksk?.perkin?.id,
     perkin_name: r.iksk?.perkin?.nama_perkin || '',
+    sasaran_kegiatan_id: r.iksk?.id_sasaran_kegiatan,
     userName: r.user?.nama || '',
     userNip: r.user?.nip,
     waktu: r.created_at

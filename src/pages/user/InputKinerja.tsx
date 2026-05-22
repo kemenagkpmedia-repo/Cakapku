@@ -22,7 +22,10 @@ export const InputKinerja: React.FC = () => {
     getFilteredPerkins,
     isLoadingPerkins,
     isLoadingPeriodes,
-    isLoadingIksks
+    isLoadingIksks,
+    sasaranKegiatans,
+    fetchSasaranKegiatans,
+    isLoadingSK
   } = usePerkinStore();
   const { user } = useAuthStore();
   const { 
@@ -40,7 +43,7 @@ export const InputKinerja: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
 
-  const isInitialLoading = isLoadingPerkins || isLoadingPeriodes || isLoadingIksks || isLoadingKinerja;
+  const isInitialLoading = isLoadingPerkins || isLoadingPeriodes || isLoadingIksks || isLoadingKinerja || isLoadingSK;
 
   // Load data dari API saat mount
   useEffect(() => {
@@ -48,7 +51,8 @@ export const InputKinerja: React.FC = () => {
     fetchPeriodes();
     fetchIksks();
     fetchKinerja();
-  }, [fetchPerkins, fetchPeriodes, fetchIksks, fetchKinerja]);
+    fetchSasaranKegiatans();
+  }, [fetchPerkins, fetchPeriodes, fetchIksks, fetchKinerja, fetchSasaranKegiatans]);
 
   // Filter perkins berdasarkan satker user dan periode aktif
   const filteredPerkins = (getFilteredPerkins() || []).filter((p) => {
@@ -56,18 +60,18 @@ export const InputKinerja: React.FC = () => {
     return p.satker_ids && userSatkerId ? p.satker_ids.includes(Number(userSatkerId)) : false;
   });
 
-  const selectedPerkinId = watch('perkin_id');
+  const selectedSasaranKegiatanId = watch('sasaran_kegiatan_id');
 
-  // Dependent dropdown: IKSK berdasarkan perkin yang dipilih
+  // Dependent dropdown: IKSK berdasarkan sasaran kegiatan yang dipilih
   useEffect(() => {
-    if (selectedPerkinId) {
-      const perkin = filteredPerkins.find((p) => String(p.id) === String(selectedPerkinId));
-      const perkinIksks = perkin?.iksk || perkin?.iksks || [];
-      setIkskOptions(perkinIksks as any);
+    if (selectedSasaranKegiatanId) {
+      const sk = sasaranKegiatans.find((s) => String(s.id) === String(selectedSasaranKegiatanId));
+      const skIksks = sk?.iksks || [];
+      setIkskOptions(skIksks as any);
     } else {
       setIkskOptions([]);
     }
-  }, [selectedPerkinId, perkins]);
+  }, [selectedSasaranKegiatanId, sasaranKegiatans]);
 
   const selectedIkskId = watch('iksk_id');
 
@@ -88,7 +92,7 @@ export const InputKinerja: React.FC = () => {
       const record = records.find((r) => r.id === editingId);
       if (record) {
         setValue('tanggal', record.tanggal);
-        setValue('perkin_id', record.perkin_id || record.iksk?.perkin?.id);
+        setValue('sasaran_kegiatan_id', record.sasaran_kegiatan_id || record.iksk?.id_sasaran_kegiatan);
         setValue('status_kehadiran', record.status_kehadiran);
         setValue('uraian_pekerjaan', record.uraian_pekerjaan);
         setTimeout(() => {
@@ -140,15 +144,15 @@ export const InputKinerja: React.FC = () => {
     );
   }
 
-  if (filteredPerkins.length === 0 && perkins.length > 0) {
+  if (sasaranKegiatans.length === 0 && !isLoadingSK) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[450px] p-8 text-center bg-white rounded-3xl border border-dashed border-border shadow-sm">
         <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-rose-100 animate-pulse">
           <AlertCircle className="w-10 h-10" />
         </div>
-        <h2 className="text-2xl font-extrabold text-text-header tracking-tight">Perkin Belum Tersedia</h2>
+        <h2 className="text-2xl font-extrabold text-text-header tracking-tight">Sasaran Kegiatan Belum Tersedia</h2>
         <p className="text-text-muted mt-3 max-w-md font-medium text-[0.9375rem] leading-relaxed">
-          Sistem mendeteksi bahwa belum ada <span className="text-accent font-bold">Perjanjian Kinerja Aktif</span> yang di-plotting untuk Satuan Kerja Anda. Hal ini bisa terjadi jika periode belum dibuat atau dinonaktifkan oleh Operator.
+          Sistem mendeteksi bahwa belum ada <span className="text-accent font-bold">Sasaran Kegiatan Aktif</span> untuk Satuan Kerja Anda. Hal ini bisa terjadi jika Sasaran Kegiatan belum dibuat atau dinonaktifkan oleh Operator.
         </p>
         <Button variant="outline" className="mt-8 rounded-xl px-8 h-12 font-bold uppercase tracking-widest text-[0.7rem] border-border hover:bg-slate-50">Hubungi Administrator</Button>
       </div>
@@ -213,24 +217,24 @@ export const InputKinerja: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="perkin_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Sasaran Kegiatan (SK) / Perjanjian Kinerja (Perkin)</Label>
+                <Label htmlFor="sasaran_kegiatan_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Sasaran Kegiatan (SK)</Label>
                 <Select
-                  id="perkin_id"
+                  id="sasaran_kegiatan_id"
                   placeholder="Klik untuk memilih Sasaran Kegiatan (SK)..."
-                  options={filteredPerkins.map((p) => ({ label: p.nama_perkin || p.name || '', value: p.id }))}
+                  options={sasaranKegiatans.map((sk) => ({ label: sk.nama_sasaran || '', value: sk.id }))}
                   className="h-14 rounded-2xl bg-slate-50 font-semibold shadow-sm"
-                  {...register('perkin_id', { required: 'Sasaran Kegiatan wajib dipilih' })}
+                  {...register('sasaran_kegiatan_id', { required: 'Sasaran Kegiatan wajib dipilih' })}
                 />
-                {errors.perkin_id && <p className="text-[0.7rem] text-rose-500 font-bold mt-2 flex items-center gap-1.5 pl-1"><AlertCircle className="w-4 h-4" /> {errors.perkin_id.message as string}</p>}
+                {errors.sasaran_kegiatan_id && <p className="text-[0.7rem] text-rose-500 font-bold mt-2 flex items-center gap-1.5 pl-1"><AlertCircle className="w-4 h-4" /> {errors.sasaran_kegiatan_id.message as string}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="iksk_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Indikator Kinerja (IKSK) dari SK Terpilih</Label>
                 <Select
                   id="iksk_id"
-                  placeholder={selectedPerkinId ? 'Pilih Indikator Kinerja (IKSK) yang dilakukan...' : 'Silakan pilih Sasaran Kegiatan (SK) terlebih dahulu'}
+                  placeholder={selectedSasaranKegiatanId ? 'Pilih Indikator Kinerja (IKSK) yang dilakukan...' : 'Silakan pilih Sasaran Kegiatan (SK) terlebih dahulu'}
                   options={ikskOptions.map((i) => ({ label: i.indikator || (i as any).name || '', value: i.id }))}
-                  disabled={!selectedPerkinId || ikskOptions.length === 0}
+                  disabled={!selectedSasaranKegiatanId || ikskOptions.length === 0}
                   className="h-14 rounded-2xl bg-slate-50 font-semibold shadow-sm"
                   {...register('iksk_id', { required: 'Indikator Kinerja (IKSK) wajib dipilih' })}
                 />

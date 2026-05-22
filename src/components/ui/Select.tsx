@@ -24,6 +24,18 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
+    const selectRef = useRef<HTMLSelectElement>(null);
+    const [localValue, setLocalValue] = useState<string | number>('');
+
+    // Merge forwarded ref with local ref
+    useEffect(() => {
+      if (!ref) return;
+      if (typeof ref === 'function') {
+        ref(selectRef.current);
+      } else {
+        (ref as React.MutableRefObject<HTMLSelectElement | null>).current = selectRef.current;
+      }
+    }, [ref]);
 
     // Sync search query reset when closed
     useEffect(() => {
@@ -45,10 +57,39 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       };
     }, []);
 
+    // Sync local state when the DOM value is modified programmatically (e.g., by React Hook Form)
+    useEffect(() => {
+      const el = selectRef.current;
+      if (!el || value !== undefined) return;
+
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+      if (!descriptor || !descriptor.set) return;
+
+      const originalSet = descriptor.set;
+
+      Object.defineProperty(el, 'value', {
+        set: function (val) {
+          originalSet.call(this, val);
+          setLocalValue(val);
+        },
+        get: descriptor.get,
+        configurable: true,
+      });
+
+      // Set initial/default value
+      setLocalValue(el.value);
+
+      return () => {
+        Object.defineProperty(el, 'value', descriptor);
+      };
+    }, [value]);
+
+    const currentValue = value !== undefined ? value : localValue;
+
     // Find the currently selected option to show its label
     const selectedOption = useMemo(() => {
-      return options.find((opt) => String(opt.value) === String(value));
-    }, [options, value]);
+      return options.find((opt) => String(opt.value) === String(currentValue));
+    }, [options, currentValue]);
 
     // Filter options based on search query
     const filteredOptions = useMemo(() => {
@@ -60,16 +101,25 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
     // Helper to simulate React's select change event
     const handleSelectOption = (optValue: string | number) => {
+      const valStr = String(optValue);
+      
+      if (value === undefined) {
+        setLocalValue(optValue);
+        if (selectRef.current) {
+          selectRef.current.value = valStr;
+        }
+      }
+
       if (onChange) {
         // Build a fake change event matching standard React select behavior
         const fakeEvent = {
-          target: {
-            value: String(optValue),
+          target: selectRef.current || {
+            value: valStr,
             name: name,
             id: id,
           },
-          currentTarget: {
-            value: String(optValue),
+          currentTarget: selectRef.current || {
+            value: valStr,
             name: name,
             id: id,
           },
@@ -120,10 +170,10 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
         {/* Hidden select field for HTML form compatibility / refs / validation libraries */}
         <select
-          ref={ref}
+          ref={selectRef}
           id={id}
           name={name}
-          value={value ?? ''}
+          value={value}
           onChange={onChange}
           disabled={disabled}
           className="sr-only"
