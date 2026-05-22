@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
       
       // Beri waktu sebentar agar user melihat transisi loading screen
       setTimeout(() => {
-        window.location.href = data.config.dashboard_path;
+        window.location.href = `${import.meta.env.BASE_URL}${data.config.dashboard_path.replace(/^\//, '')}`;
       }, 500);
 
     } catch (error) {

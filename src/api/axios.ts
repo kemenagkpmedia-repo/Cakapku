@@ -49,7 +49,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Handle unauthorized (e.g., token expired)
       useAuthStore.getState().logout();
-      window.location.href = '/login';
+      window.location.href = `${import.meta.env.BASE_URL}login`;
     }
     return Promise.reject(error);
   }

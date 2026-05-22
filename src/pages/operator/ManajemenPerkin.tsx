@@ -212,7 +212,7 @@ export const ManajemenPerkin: React.FC = () => {
             <h4 className="font-extrabold tracking-tight">Tidak Ada Periode Aktif</h4>
             <p className="text-sm font-medium text-amber-900/60 mt-1">Anda tidak dapat menginput Perkin karena belum ada Periode yang dibuat atau statusnya sedang Non-aktif.</p>
           </div>
-          <Button onClick={() => (window.location.href = '/operator/periode')} className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-6 h-10 text-[0.7rem] font-bold uppercase tracking-widest">
+          <Button onClick={() => (window.location.href = `${import.meta.env.BASE_URL}operator/periode`)} className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-6 h-10 text-[0.7rem] font-bold uppercase tracking-widest">
             Masuk Manajemen Periode
           </Button>
         </motion.div>
