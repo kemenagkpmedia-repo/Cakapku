@@ -69,7 +69,7 @@ interface PerkinState {
   updatePerkin: (id: number, data: { nama_perkin?: string; no_sk?: string; status?: boolean }) => Promise<void>;
   deletePerkin: (id: number) => Promise<void>;
   assignSatker: (perkinId: number, satkerIds: number[]) => Promise<void>;
-  importPerkin: (file: File, id_periode: number) => Promise<void>;
+  importPerkin: (file: File, id_periode: number, nama_perkin: string) => Promise<void>;
 
   // Sasaran Kegiatan (SK)
   sasaranKegiatans: SasaranKegiatan[];
@@ -87,7 +87,7 @@ interface PerkinState {
   isLoadingIksks: boolean;
   errorIksks: string | null;
   fetchIksks: () => Promise<void>;
-  addIksk: (data: { id_perkin: number; indikator: string; target_vol?: string; target_satuan?: string }) => Promise<void>;
+  addIksk: (data: { id_sasaran_kegiatan: number; indikator: string; target_vol?: string; target_satuan?: string }) => Promise<void>;
   updateIksk: (id: number, data: { indikator?: string; target_vol?: string; target_satuan?: string }) => Promise<void>;
   deleteIksk: (id: number) => Promise<void>;
 
@@ -204,8 +204,8 @@ export const usePerkinStore = create<PerkinState>()((set, get) => ({
     }));
   },
 
-  importPerkin: async (file, id_periode) => {
-    await perkinService.importExcel(file, id_periode);
+  importPerkin: async (file, id_periode, nama_perkin) => {
+    await perkinService.importExcel(file, id_periode, nama_perkin);
     // Setelah import, refresh data dari server
     await get().fetchPerkins();
   },

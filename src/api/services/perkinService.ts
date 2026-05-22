@@ -14,10 +14,11 @@ export const perkinService = {
   delete: (id: number) => api.delete(`/perkins/${id}`),
   assignSatker: (id: number, id_satkers: number[]) =>
     api.post(`/perkins/${id}/assign-satker`, { id_satkers }),
-  importExcel: (file: File, id_periode: number) => {
+  importExcel: (file: File, id_periode: number, nama_perkin: string) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('id_periode', String(id_periode));
+    formData.append('nama_perkin', nama_perkin);
     return api.post('/perkins/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
