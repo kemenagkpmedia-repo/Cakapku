@@ -18,6 +18,17 @@ export interface PerformanceRecord {
     indikator: string;
     target_vol?: string;
     target_satuan?: string;
+    sasaran_kegiatan?: {
+      id: number;
+      id_perkin: number;
+      nama_sasaran: string;
+      perkin?: {
+        id: number;
+        no_sk?: string;
+        nama_perkin: string;
+        label_perkin?: string;
+      };
+    };
     perkin?: {
       id: number;
       nama_perkin: string;
@@ -74,8 +85,8 @@ function mapRecord(r: any): PerformanceRecord {
     // Backward-compat aliases
     iksk_id: r.id_iksk ?? r.iksk?.id,
     iksk_name: r.iksk?.indikator || '',
-    perkin_id: r.iksk?.perkin?.id,
-    perkin_name: r.iksk?.perkin?.nama_perkin || '',
+    perkin_id: r.iksk?.sasaran_kegiatan?.perkin?.id ?? r.iksk?.perkin?.id,
+    perkin_name: r.iksk?.sasaran_kegiatan?.perkin?.label_perkin || r.iksk?.sasaran_kegiatan?.perkin?.nama_perkin || r.iksk?.sasaran_kegiatan?.nama_sasaran || r.iksk?.perkin?.nama_perkin || '',
     sasaran_kegiatan_id: r.iksk?.id_sasaran_kegiatan,
     userName: r.user?.nama || '',
     userNip: r.user?.nip,

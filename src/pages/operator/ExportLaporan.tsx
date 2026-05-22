@@ -351,37 +351,28 @@ export const ExportLaporan: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Panel: Configuration controls */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Section 1: Period filter */}
-          <Card className="rounded-3xl border-border shadow-sm bg-white border border-slate-200/50">
-            <CardHeader className="border-b border-border/50 px-6 py-4 bg-slate-50/50">
-              <CardTitle className="text-sm font-extrabold flex items-center gap-2.5 text-text-header">
-                <Calendar className="w-4 h-4 text-accent" />
-                Periode Laporan LKB
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Bulan</Label>
-                  <Select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    options={monthsIndo}
-                    className="h-10 text-xs font-bold"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun</Label>
-                  <Select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
-                    options={years.map(y => ({ label: y, value: y }))}
-                    className="h-10 text-xs font-bold"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Section 1: Period filter (Standalone Selects at the top) */}
+          <div className="relative z-20 bg-white border border-slate-200/50 p-6 rounded-3xl shadow-sm grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Bulan</Label>
+              <Select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                options={monthsIndo}
+                className="h-10 text-xs font-bold"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun</Label>
+              <Select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                options={years.map(y => ({ label: y, value: y }))}
+                className="h-10 text-xs font-bold"
+              />
+            </div>
+          </div>
+
 
           {/* Section 3: Signature configurations */}
           <Card className="rounded-3xl border-border shadow-sm bg-white border border-slate-200/50">

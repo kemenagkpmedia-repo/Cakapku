@@ -345,39 +345,30 @@ export const ExportLKB: React.FC = () => {
         {/* Left Column: Premium Settings Control Sidebar */}
         <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-4 no-print">
 
-          {/* Section 1: Period filter */}
-          <Card className="rounded-3xl border-border shadow-elegant overflow-hidden bg-white/90 backdrop-blur-xl">
-            <CardHeader className="border-b border-border/50 px-6 py-4 bg-slate-50/50">
-              <CardTitle className="text-sm font-extrabold flex items-center gap-2.5 text-text-header">
-                <Calendar className="w-4 h-4 text-accent" />
-                Periode Laporan
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Bulan</Label>
-                  <Select
-                    id="month-select"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    options={months}
-                    className="h-11 rounded-xl bg-slate-50 font-semibold border-slate-200"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun</Label>
-                  <Select
-                    id="year-select"
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value)}
-                    options={years}
-                    className="h-11 rounded-xl bg-slate-50 font-semibold border-slate-200"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Section 1: Period filter (Standalone Selects at the top) */}
+          <div className="relative z-20 bg-white/90 backdrop-blur-xl p-6 rounded-3xl border border-border shadow-elegant grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Bulan</Label>
+              <Select
+                id="month-select"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                options={months}
+                className="h-11 rounded-xl bg-slate-50 font-semibold border-slate-200"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Tahun</Label>
+              <Select
+                id="year-select"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                options={years}
+                className="h-11 rounded-xl bg-slate-50 font-semibold border-slate-200"
+              />
+            </div>
+          </div>
+
 
           {/* Section 3: Supervisor & Signature Customizer */}
           <Card className="rounded-3xl border-border shadow-elegant overflow-hidden bg-white/90 backdrop-blur-xl">

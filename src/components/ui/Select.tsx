@@ -105,9 +105,10 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       
       if (value === undefined) {
         setLocalValue(optValue);
-        if (selectRef.current) {
-          selectRef.current.value = valStr;
-        }
+      }
+
+      if (selectRef.current) {
+        selectRef.current.value = valStr;
       }
 
       if (onChange) {
@@ -128,6 +129,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       }
       setIsOpen(false);
     };
+
 
     const handleClearSelection = (e: React.MouseEvent) => {
       e.stopPropagation();
