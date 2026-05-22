@@ -19,7 +19,6 @@ import {
   Eye,
   User,
   HelpCircle,
-  Sliders,
   Check,
   LayoutTemplate,
   Info,
@@ -47,7 +46,7 @@ export const ExportLKB: React.FC = () => {
 
   // Print Config States
   const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
-  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('small');
+  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [showSignature, setShowSignature] = useState<boolean>(true);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
 
@@ -192,10 +191,6 @@ export const ExportLKB: React.FC = () => {
     } finally {
       setIsGeneratingPdf(false);
     }
-  };
-
-  const toggleColumn = (key: keyof typeof showColumns) => {
-    setShowColumns(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   // Pre-calculated visible column count for table colspan
@@ -381,122 +376,6 @@ export const ExportLKB: React.FC = () => {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Section 2: PDF Page Parameters */}
-          <Card className="rounded-3xl border-border shadow-elegant overflow-hidden bg-white/90 backdrop-blur-xl">
-            <CardHeader className="border-b border-border/50 px-6 py-4 bg-slate-50/50">
-              <CardTitle className="text-sm font-extrabold flex items-center gap-2.5 text-text-header">
-                <Sliders className="w-4 h-4 text-accent" />
-                Pengaturan Halaman PDF
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-6">
-
-              {/* Orientation selector - custom styled tabs */}
-              <div className="space-y-2">
-                <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Orientasi Kertas</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setOrientation('portrait')}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all group relative",
-                      orientation === 'portrait'
-                        ? "border-accent bg-accent/5 text-accent font-bold"
-                        : "border-slate-100 hover:border-slate-200 text-text-muted hover:text-text-header bg-slate-50/50"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-6 h-8 rounded-md border-2 mb-2 flex flex-col gap-0.5 p-1",
-                      orientation === 'portrait' ? "border-accent bg-accent/10" : "border-slate-300"
-                    )}>
-                      <div className={cn("h-0.5 w-full rounded", orientation === 'portrait' ? "bg-accent" : "bg-slate-300")} />
-                      <div className={cn("h-0.5 w-3/4 rounded", orientation === 'portrait' ? "bg-accent/60" : "bg-slate-300")} />
-                      <div className={cn("h-0.5 w-full rounded", orientation === 'portrait' ? "bg-accent" : "bg-slate-300")} />
-                    </div>
-                    <span className="text-xs">Portrait</span>
-                  </button>
-
-                  <button
-                    onClick={() => setOrientation('landscape')}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all group relative",
-                      orientation === 'landscape'
-                        ? "border-accent bg-accent/5 text-accent font-bold"
-                        : "border-slate-100 hover:border-slate-200 text-text-muted hover:text-text-header bg-slate-50/50"
-                    )}
-                  >
-                    <div className="absolute -top-2 right-2 bg-emerald-500 text-white text-[0.55rem] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
-                      Rekomendasi
-                    </div>
-                    <div className={cn(
-                      "w-8 h-6 rounded-md border-2 mb-2 flex flex-col gap-0.5 p-1",
-                      orientation === 'landscape' ? "border-accent bg-accent/10" : "border-slate-300"
-                    )}>
-                      <div className={cn("h-0.5 w-full rounded", orientation === 'landscape' ? "bg-accent" : "bg-slate-300")} />
-                      <div className={cn("h-0.5 w-3/4 rounded", orientation === 'landscape' ? "bg-accent/60" : "bg-slate-300")} />
-                    </div>
-                    <span className="text-xs">Landscape</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Font Size Scaling */}
-              <div className="space-y-2">
-                <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Ukuran Huruf Tabel</Label>
-                <div className="grid grid-cols-3 gap-2 bg-slate-100/80 p-1 rounded-xl">
-                  {(['small', 'medium', 'large'] as const).map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setFontSize(size)}
-                      className={cn(
-                        "py-2 px-1 text-xs rounded-lg transition-all font-semibold capitalize",
-                        fontSize === size
-                          ? "bg-white text-text-header shadow-sm font-bold"
-                          : "text-text-muted hover:text-text-header"
-                      )}
-                    >
-                      {size === 'small' ? 'Kecil (7.5pt)' : size === 'medium' ? 'Sedang' : 'Besar'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dynamic Column Visibility Toggles */}
-              <div className="space-y-3">
-                <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Sembunyikan Kolom Tabel</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: 'Status Kehadiran', key: 'status' as const },
-                    { label: 'SK / Perkin', key: 'perkin' as const },
-                    { label: 'Indikator / IKSK', key: 'iksk' as const },
-                    { label: 'Volume Kerja', key: 'volume' as const },
-                  ].map((col) => (
-                    <button
-                      key={col.key}
-                      onClick={() => toggleColumn(col.key)}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all text-xs",
-                        showColumns[col.key]
-                          ? "bg-white border-slate-200 text-slate-700"
-                          : "bg-slate-50 border-dashed border-slate-300 text-slate-400 opacity-60"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-4 h-4 rounded flex items-center justify-center border transition-all shrink-0",
-                        showColumns[col.key]
-                          ? "bg-accent border-accent text-white"
-                          : "border-slate-300 bg-white"
-                      )}>
-                        {showColumns[col.key] && <Check className="w-3 h-3" />}
-                      </div>
-                      <span className="truncate">{col.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
             </CardContent>
           </Card>
 

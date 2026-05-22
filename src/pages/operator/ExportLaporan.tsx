@@ -64,7 +64,7 @@ export const ExportLaporan: React.FC = () => {
 
   // Print Config States
   const [orientation, setOrientation] = useState<'landscape' | 'portrait'>('landscape');
-  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('small');
+  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [showSignature, setShowSignature] = useState<boolean>(true);
 
   // TTE Anchor States
@@ -149,11 +149,6 @@ export const ExportLaporan: React.FC = () => {
     volume: true,
     uraian: true
   });
-
-  const toggleColumn = (key: keyof typeof showColumns) => {
-    setShowColumns(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
   // Checked Employees States
   const [checkedIds, setCheckedIds] = useState<number[]>([]);
 
@@ -383,90 +378,6 @@ export const ExportLaporan: React.FC = () => {
                     options={years.map(y => ({ label: y, value: y }))}
                     className="h-10 text-xs font-bold"
                   />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Section 2: PDF settings */}
-          <Card className="rounded-3xl border-border shadow-sm bg-white border border-slate-200/50">
-            <CardHeader className="border-b border-border/50 px-6 py-4 bg-slate-50/50">
-              <CardTitle className="text-sm font-extrabold flex items-center gap-2.5 text-text-header">
-                <Sliders className="w-4 h-4 text-accent" />
-                Pengaturan Tampilan Cetak
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-6">
-              {/* Orientation */}
-              <div className="space-y-2">
-                <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Orientasi Kertas</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setOrientation('portrait')}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all group relative",
-                      orientation === 'portrait'
-                        ? "border-accent bg-accent/5 text-accent font-bold"
-                        : "border-slate-100 hover:border-slate-200 text-text-muted hover:text-text-header bg-slate-50/50"
-                    )}
-                  >
-                    <span className="text-xs">Portrait</span>
-                  </button>
-
-                  <button
-                    onClick={() => setOrientation('landscape')}
-                    className={cn(
-                      "flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all group relative",
-                      orientation === 'landscape'
-                        ? "border-accent bg-accent/5 text-accent font-bold"
-                        : "border-slate-100 hover:border-slate-200 text-text-muted hover:text-text-header bg-slate-50/50"
-                    )}
-                  >
-                    <span className="text-xs font-bold">Landscape</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Font Size */}
-              <div className="space-y-2">
-                <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Ukuran Huruf Tabel</Label>
-                <div className="grid grid-cols-3 gap-2 bg-slate-100/80 p-1 rounded-xl">
-                  {(['small', 'medium', 'large'] as const).map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setFontSize(size)}
-                      className={cn(
-                        "py-2 px-1 rounded-lg text-[0.65rem] font-black uppercase tracking-wider transition-all",
-                        fontSize === size
-                          ? "bg-white text-text-header shadow-sm"
-                          : "text-text-muted hover:text-text-header"
-                      )}
-                    >
-                      {size === 'small' ? 'Kecil' : size === 'medium' ? 'Sedang' : 'Besar'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Column selections */}
-              <div className="space-y-2.5">
-                <Label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-wider pl-1">Pilihan Kolom Tabel</Label>
-                <div className="space-y-1.5 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  {Object.entries(showColumns).map(([key, isChecked]) => (
-                    <button
-                      key={key}
-                      onClick={() => toggleColumn(key as keyof typeof showColumns)}
-                      className="flex items-center gap-3 w-full py-1.5 text-left text-xs font-bold text-text-main hover:text-accent transition-colors"
-                    >
-                      <div className={cn(
-                        "w-4.5 h-4.5 rounded-md flex items-center justify-center border transition-all",
-                        isChecked ? "bg-accent border-accent text-white" : "border-slate-300 bg-white"
-                      )}>
-                        {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                      <span className="capitalize">{key === 'uraian' ? 'Uraian Pekerjaan' : key}</span>
-                    </button>
-                  ))}
                 </div>
               </div>
             </CardContent>
