@@ -39,7 +39,7 @@ const RootRedirect = () => {
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.VITE_BASE}>
+    <BrowserRouter basename={(import.meta.env.VITE_BASE || '').replace(/\/$/, '')}>
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
