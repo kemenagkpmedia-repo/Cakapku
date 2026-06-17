@@ -7,6 +7,9 @@ export interface Satker {
   id: number;
   nama_satker: string;
   id_pimpinan?: number;
+  parent_id?: number;
+  level?: number;
+  parent?: Satker;
   // alias untuk kompatibilitas UI lama
   name?: string;
   pimpinan_id?: number;
@@ -18,8 +21,8 @@ interface SatkerState {
   error: string | null;
 
   fetchSatkers: () => Promise<void>;
-  addSatker: (nama_satker: string, id_pimpinan?: number) => Promise<void>;
-  updateSatker: (id: number, nama_satker: string, id_pimpinan?: number) => Promise<void>;
+  addSatker: (nama_satker: string, id_pimpinan?: number, parent_id?: number, level?: number) => Promise<void>;
+  updateSatker: (id: number, nama_satker: string, id_pimpinan?: number, parent_id?: number, level?: number) => Promise<void>;
   deleteSatker: (id: number) => Promise<void>;
 }
 
@@ -51,14 +54,14 @@ export const useSatkerStore = create<SatkerState>()((set) => ({
     }
   },
 
-  addSatker: async (nama_satker, id_pimpinan) => {
-    const res = await satkerService.create({ nama_satker, id_pimpinan });
+  addSatker: async (nama_satker, id_pimpinan, parent_id, level) => {
+    const res = await satkerService.create({ nama_satker, id_pimpinan, parent_id, level });
     const s = res.data?.data || res.data;
     set((state) => ({ satkers: [...state.satkers, mapSatker(s)] }));
   },
 
-  updateSatker: async (id, nama_satker, id_pimpinan) => {
-    const res = await satkerService.update(id, { nama_satker, id_pimpinan });
+  updateSatker: async (id, nama_satker, id_pimpinan, parent_id, level) => {
+    const res = await satkerService.update(id, { nama_satker, id_pimpinan, parent_id, level });
     const updated = res.data?.data || res.data;
     set((state) => ({
       satkers: state.satkers.map((s) => (s.id === id ? mapSatker({ ...s, ...updated }) : s)),

@@ -42,6 +42,8 @@ export const ManajemenUser: React.FC = () => {
     email: '',
     roles: [] as Role[],
     id_satker: '',
+    id_atasan: '',
+    sub_unit: '',
     nip: '',
     jabatan: '',
     gol_ruang: '',
@@ -50,6 +52,11 @@ export const ManajemenUser: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;
+
+  const supervisors = users.filter(u => 
+    (u.assigned_roles?.includes('PIMPINAN') || u.role === 'PIMPINAN') &&
+    (!selectedUser || u.id !== selectedUser.id)
+  );
 
   const filteredUsers = users.filter(u =>
     (u.nama || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -89,6 +96,8 @@ export const ManajemenUser: React.FC = () => {
       email: '',
       roles: ['USER'],
       id_satker: '',
+      id_atasan: '',
+      sub_unit: '',
       nip: '',
       jabatan: '',
       gol_ruang: '',
@@ -103,12 +112,15 @@ export const ManajemenUser: React.FC = () => {
     }
     try {
       await addUser({
-        ...formData,
-        // username default ke NIP jika kosong
+        nama: formData.nama,
+        nip: formData.nip,
         username: formData.username.trim() || formData.nip.trim(),
-        // password default ke NIP jika kosong
         password: formData.password.trim() || formData.nip.trim(),
+        email: formData.email || undefined,
+        roles: formData.roles,
         id_satker: formData.id_satker ? Number(formData.id_satker) : undefined,
+        jabatan: formData.jabatan || undefined,
+        gol_ruang: formData.gol_ruang || undefined,
       });
       resetForm();
       setIsAddModalOpen(false);
@@ -137,7 +149,6 @@ export const ManajemenUser: React.FC = () => {
         id_satker: formData.id_satker ? Number(formData.id_satker) : undefined,
         jabatan: formData.jabatan,
         gol_ruang: formData.gol_ruang,
-        // Sertakan password jika diisi
         password: formData.password.trim() || undefined,
       });
       resetForm();
@@ -337,6 +348,16 @@ export const ManajemenUser: React.FC = () => {
                             <Building2 className="w-3.5 h-3.5 text-text-muted" />
                             {getSatkerName(user.id_satker)}
                           </div>
+                          {user.sub_unit && (
+                            <div className="text-[0.65rem] text-text-muted mt-1">
+                              Sub Unit: <span className="font-bold text-accent">{user.sub_unit}</span>
+                            </div>
+                          )}
+                          {user.atasan_user && (
+                            <div className="text-[0.65rem] text-text-muted">
+                              Atasan: <span className="font-bold">{user.atasan_user.nama || '—'}</span>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -351,6 +372,8 @@ export const ManajemenUser: React.FC = () => {
                                 email: user.email || '',
                                 roles: user.assigned_roles || (user.role ? [user.role] : []),
                                 id_satker: (user.id_satker ?? user.satker_id)?.toString() || '',
+                                id_atasan: user.id_atasan?.toString() || '',
+                                sub_unit: user.sub_unit || '',
                                 nip: user.nip || '',
                                 jabatan: user.jabatan || '',
                                 gol_ruang: user.gol_ruang || '',
@@ -530,7 +553,10 @@ export const ManajemenUser: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, id_satker: e.target.value })}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
-                  ...satkers.map(s => ({ label: s.nama_satker || s.name || '', value: s.id.toString() }))
+                  ...satkers.map(s => ({ 
+                    label: `${'—'.repeat(s.level ?? 0)} ${s.nama_satker || s.name || ''} (Lvl ${s.level ?? 0})`, 
+                    value: s.id.toString() 
+                  }))
                 ]}
                 className="h-12"
               />
@@ -540,6 +566,7 @@ export const ManajemenUser: React.FC = () => {
               <Input placeholder="Kepala Seksi / Staf..." value={formData.jabatan} onChange={(e) => setFormData({ ...formData, jabatan: e.target.value })} className="h-12 rounded-xl" />
             </div>
           </div>
+
           {/* Row 5: Golongan Ruang */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -639,7 +666,10 @@ export const ManajemenUser: React.FC = () => {
                 disabled={config?.active_role !== 'SUPER ADMIN'}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
-                  ...satkers.map(s => ({ label: s.nama_satker || s.name || '', value: s.id.toString() }))
+                  ...satkers.map(s => ({ 
+                    label: `${'—'.repeat(s.level ?? 0)} ${s.nama_satker || s.name || ''} (Lvl ${s.level ?? 0})`, 
+                    value: s.id.toString() 
+                  }))
                 ]}
                 className="h-12"
               />
@@ -649,6 +679,7 @@ export const ManajemenUser: React.FC = () => {
               <Input value={formData.jabatan} onChange={(e) => setFormData({ ...formData, jabatan: e.target.value })} className="h-12 rounded-xl" />
             </div>
           </div>
+
           {/* Row Baru: Password Edit */}
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">

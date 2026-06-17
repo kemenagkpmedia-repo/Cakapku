@@ -21,6 +21,7 @@ export const ManajemenSatker: React.FC = () => {
   const [selectedSatker, setSelectedSatker] = useState<any | null>(null);
   const [satkerName, setSatkerName] = useState('');
   const [pimpinanId, setPimpinanId] = useState<string>('');
+  const [parentSatkerId, setParentSatkerId] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -33,9 +34,14 @@ export const ManajemenSatker: React.FC = () => {
     if (!satkerName.trim() || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await addSatker(satkerName.trim(), pimpinanId ? parseInt(pimpinanId) : undefined);
+      await addSatker(
+        satkerName.trim(),
+        pimpinanId ? parseInt(pimpinanId) : undefined,
+        parentSatkerId ? parseInt(parentSatkerId) : undefined
+      );
       setSatkerName('');
       setPimpinanId('');
+      setParentSatkerId('');
       setIsAddModalOpen(false);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal menambah satker.');
@@ -49,9 +55,15 @@ export const ManajemenSatker: React.FC = () => {
     if (!selectedSatker || !satkerName.trim() || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await updateSatker(selectedSatker.id, satkerName.trim(), pimpinanId ? parseInt(pimpinanId) : undefined);
+      await updateSatker(
+        selectedSatker.id,
+        satkerName.trim(),
+        pimpinanId ? parseInt(pimpinanId) : undefined,
+        parentSatkerId ? parseInt(parentSatkerId) : undefined
+      );
       setSatkerName('');
       setPimpinanId('');
+      setParentSatkerId('');
       setSelectedSatker(null);
       setIsEditModalOpen(false);
     } catch (err: any) {
@@ -88,7 +100,23 @@ export const ManajemenSatker: React.FC = () => {
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent shrink-0">
             <Building2 className="w-5 h-5" />
           </div>
-          <span className="font-extrabold text-text-header tracking-tight">{item.nama_satker || item.name}</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-text-header tracking-tight">{item.nama_satker || item.name}</span>
+              <span className={`text-[0.6rem] px-2 py-0.5 rounded-full font-black uppercase tracking-widest ${
+                item.level === 0 ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
+                item.level === 1 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                'bg-emerald-50 text-emerald-600 border border-emerald-100'
+              }`}>
+                Lvl {item.level ?? 0}
+              </span>
+            </div>
+            {item.parent && (
+              <div className="text-[0.65rem] text-text-muted mt-1 font-semibold">
+                Parent: <span className="text-accent">{item.parent.nama_satker || item.parent.name}</span>
+              </div>
+            )}
+          </div>
         </div>
       )
     },
@@ -152,6 +180,7 @@ export const ManajemenSatker: React.FC = () => {
                 setSelectedSatker(satker); 
                 setSatkerName(satker.nama_satker || satker.name || ''); 
                 setPimpinanId((satker.id_pimpinan ?? satker.pimpinan_id)?.toString() || ''); 
+                setParentSatkerId(satker.parent_id?.toString() || '');
                 setIsEditModalOpen(true); 
               }}
               className="p-2.5 rounded-xl text-accent hover:bg-accent/10 transition-all border border-transparent hover:border-accent/10"
@@ -190,6 +219,22 @@ export const ManajemenSatker: React.FC = () => {
               ]}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="add-parent">Parent Satker</Label>
+            <Select
+              id="add-parent"
+              value={parentSatkerId}
+              onChange={(e) => setParentSatkerId(e.target.value)}
+              className="h-12 rounded-xl"
+              options={[
+                { label: 'Tidak Ada Parent (Level 0)', value: '' },
+                ...satkers.map((s) => ({ 
+                  label: `${'—'.repeat(s.level ?? 0)} ${s.nama_satker || s.name || ''} (Lvl ${s.level ?? 0})`, 
+                  value: s.id.toString() 
+                })),
+              ]}
+            />
+          </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)} className="flex-1 rounded-xl h-12 uppercase font-bold tracking-widest text-[0.7rem]">Batal</Button>
             <Button type="submit" disabled={isSubmitting} className="flex-1 rounded-xl h-12 uppercase font-bold tracking-widest text-[0.7rem]">
@@ -216,6 +261,24 @@ export const ManajemenSatker: React.FC = () => {
               options={[
                 { label: 'Tanpa Pimpinan', value: '' },
                 ...pimpinanUsers.map((u) => ({ label: u.nama || String(u.id), value: u.id.toString() })),
+              ]}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-parent">Parent Satker</Label>
+            <Select
+              id="edit-parent"
+              value={parentSatkerId}
+              onChange={(e) => setParentSatkerId(e.target.value)}
+              className="h-12 rounded-xl"
+              options={[
+                { label: 'Tidak Ada Parent (Level 0)', value: '' },
+                ...satkers
+                  .filter((s) => !selectedSatker || s.id !== selectedSatker.id)
+                  .map((s) => ({ 
+                    label: `${'—'.repeat(s.level ?? 0)} ${s.nama_satker || s.name || ''} (Lvl ${s.level ?? 0})`, 
+                    value: s.id.toString() 
+                  })),
               ]}
             />
           </div>

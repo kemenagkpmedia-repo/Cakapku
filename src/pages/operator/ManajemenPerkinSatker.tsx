@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { usePerkinStore } from '../../store/perkinStore';
 import { useSatkerStore } from '../../store/satkerStore';
-import { Building, Check, Save, AlertCircle, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { Building, Check, Save, AlertCircle, ChevronRight, CheckCircle2, Loader2, Lock } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export const ManajemenPerkinSatker: React.FC = () => {
   const { perkins, isLoadingPerkins, fetchPerkins, assignSatker } = usePerkinStore();
   const { satkers, isLoading: isLoadingSatkers, fetchSatkers } = useSatkerStore();
+  const { user } = useAuthStore();
   const [selectedPerkinId, setSelectedPerkinId] = useState<number | null>(null);
   const [tempSatkerIds, setTempSatkerIds] = useState<number[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -20,6 +22,26 @@ export const ManajemenPerkinSatker: React.FC = () => {
     fetchSatkers();
   }, [fetchPerkins, fetchSatkers]);
 
+  // Helper to find all descendants of a satker recursively
+  const getDescendants = (parentId: number, list: any[]): number[] => {
+    let ids: number[] = [parentId];
+    const children = list.filter(s => s.parent_id === parentId);
+    for (const child of children) {
+      ids = [...ids, ...getDescendants(child.id, list)];
+    }
+    return ids;
+  };
+
+  const manageableSatkerIds = useMemo(() => {
+    if (!user) return [];
+    if (user.role === 'SUPER ADMIN' || user.role === 'ADMIN') {
+      return satkers.map(s => s.id);
+    }
+    const userSatkerId = user.id_satker ?? user.satker_id;
+    if (!userSatkerId) return [];
+    return getDescendants(userSatkerId, satkers);
+  }, [user, satkers]);
+
   const handleSelectPerkin = (id: number) => {
     setSelectedPerkinId(id);
     const perkin = perkins.find((p) => p.id === id);
@@ -27,6 +49,10 @@ export const ManajemenPerkinSatker: React.FC = () => {
   };
 
   const toggleSatker = (satkerId: number) => {
+    if (!manageableSatkerIds.includes(satkerId)) {
+      alert("Anda tidak memiliki hak akses untuk memetakan Perkin ke Satker ini.");
+      return;
+    }
     setTempSatkerIds((prev) =>
       prev.includes(satkerId) ? prev.filter((id) => id !== satkerId) : [...prev, satkerId]
     );
@@ -174,32 +200,88 @@ export const ManajemenPerkinSatker: React.FC = () => {
                       Belum ada data Satker. Tambahkan Satker di menu Manajemen Satker.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {satkers.map((satker) => {
-                        const isSelected = tempSatkerIds.includes(satker.id);
-                        return (
-                          <div
-                            key={satker.id}
-                            onClick={() => toggleSatker(satker.id)}
-                            className={cn(
-                              'flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all duration-300 group',
-                              isSelected
-                                ? 'border-accent bg-accent/5 ring-1 ring-accent/10'
-                                : 'border-border bg-white text-text-main hover:border-accent/30 hover:bg-slate-50'
-                            )}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500', isSelected ? 'bg-accent text-white rotate-6 scale-110 shadow-lg shadow-accent/20' : 'bg-slate-50 text-text-muted group-hover:bg-white border border-transparent group-hover:border-border')}>
-                                <Building className="w-4 h-4" />
+                    <div className="flex flex-col gap-3">
+                      {(() => {
+                        // Helper to build a flat list in hierarchical order
+                        const buildHierarchy = (items: typeof satkers, parentId: number | null | undefined = null): typeof satkers => {
+                          let result: typeof satkers = [];
+                          const children = items.filter(item => (item.parent_id === parentId || (!parentId && !item.parent_id)));
+                          
+                          // Sort children by name
+                          children.sort((a, b) => a.nama_satker.localeCompare(b.nama_satker));
+                          
+                          for (const child of children) {
+                            result.push(child);
+                            // Only recurse if it has child items to prevent infinite loop
+                            const subChildren = buildHierarchy(items, child.id);
+                            result = [...result, ...subChildren];
+                          }
+                          return result;
+                        };
+
+                        const sortedSatkers = buildHierarchy(satkers, null);
+
+                        // If buildHierarchy returns empty due to some parent_id mismatches, fall back to default satkers
+                        const listToRender = sortedSatkers.length > 0 ? sortedSatkers : satkers;
+
+                        return listToRender.map((satker) => {
+                          const isSelected = tempSatkerIds.includes(satker.id);
+                          const isManageable = manageableSatkerIds.includes(satker.id);
+                          const indent = (satker.level ?? 0) * 24; // 24px indent per level
+
+                          return (
+                            <div
+                              key={satker.id}
+                              style={{ marginLeft: `${indent}px` }}
+                              onClick={() => isManageable && toggleSatker(satker.id)}
+                              className={cn(
+                                'flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 group',
+                                isManageable ? 'cursor-pointer' : 'cursor-not-allowed opacity-50 bg-slate-50/70',
+                                isSelected
+                                  ? 'border-accent bg-accent/5 ring-1 ring-accent/10 shadow-sm'
+                                  : 'border-border bg-white text-text-main',
+                                isManageable && !isSelected && 'hover:border-accent/30 hover:bg-slate-50'
+                              )}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={cn(
+                                  'w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500', 
+                                  isSelected 
+                                    ? 'bg-accent text-white rotate-6 scale-110 shadow-lg shadow-accent/20' 
+                                    : 'bg-slate-50 text-text-muted group-hover:bg-white border border-transparent group-hover:border-border'
+                                )}>
+                                  {isManageable ? <Building className="w-4 h-4" /> : <Lock className="w-4 h-4 text-text-muted/65" />}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={cn('text-sm font-bold tracking-tight', isSelected ? 'text-accent' : 'text-text-main')}>
+                                      {satker.nama_satker || satker.name}
+                                    </span>
+                                    <span className={`text-[0.55rem] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
+                                      satker.level === 0 ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' :
+                                      satker.level === 1 ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                      'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                    }`}>
+                                      Lvl {satker.level ?? 0}
+                                    </span>
+                                    {!isManageable && (
+                                      <span className="text-[0.6rem] font-bold text-rose-500 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                        Read Only
+                                      </span>
+                                    )}
+                                  </div>
+                                  {satker.parent && (
+                                    <span className="text-[0.65rem] text-text-muted">
+                                      Parent: {satker.parent.nama_satker || satker.parent.name}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <span className={cn('text-sm font-bold tracking-tight', isSelected ? 'text-accent' : 'text-text-main')}>
-                                {satker.nama_satker || satker.name}
-                              </span>
+                              {isSelected && <CheckCircle2 className="w-5 h-5 text-accent animate-in zoom-in-50 duration-300" />}
                             </div>
-                            {isSelected && <CheckCircle2 className="w-5 h-5 text-accent animate-in zoom-in-50 duration-300" />}
-                          </div>
-                        );
-                      })}
+                          );
+                        });
+                      })()}
                     </div>
                   )}
 

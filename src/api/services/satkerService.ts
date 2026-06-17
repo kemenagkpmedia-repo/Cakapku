@@ -3,6 +3,8 @@ import api from '../axios';
 export interface SatkerPayload {
   nama_satker: string;
   id_pimpinan?: number;
+  parent_id?: number;
+  level?: number;
 }
 
 export const satkerService = {
