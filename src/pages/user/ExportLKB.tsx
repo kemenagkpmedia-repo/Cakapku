@@ -65,22 +65,17 @@ export const ExportLKB: React.FC = () => {
 
   // Auto-populate supervisor (atasan) details once loaded
   useEffect(() => {
-    if (user && satkers.length > 0 && users.length > 0) {
-      const mySatker = satkers.find(s => s.id === user.satker_id || s.id === user.id_satker);
-      const pimpinanId = mySatker?.id_pimpinan || mySatker?.pimpinan_id;
-      if (pimpinanId) {
-        const pimpinanUser = users.find(u => u.id === pimpinanId);
-        if (pimpinanUser) {
-          if (!customAtasanName) {
-            setCustomAtasanName(pimpinanUser.nama || pimpinanUser.name || '');
-          }
-          if (!customAtasanNip) {
-            setCustomAtasanNip(pimpinanUser.nip || '');
-          }
+    if (user) {
+      if (user.atasan_user) {
+        if (!customAtasanName) {
+          setCustomAtasanName(user.atasan_user.nama || user.atasan_user.name || '');
+        }
+        if (!customAtasanNip) {
+          setCustomAtasanNip(user.atasan_user.nip || '');
         }
       }
     }
-  }, [user, satkers, users, customAtasanName, customAtasanNip]);
+  }, [user, customAtasanName, customAtasanNip]);
 
   // Dynamic column visibility toggles
   const [showColumns, setShowColumns] = useState({
