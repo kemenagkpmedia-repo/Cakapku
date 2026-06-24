@@ -3,12 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
-import { 
-  Users, 
-  Building, 
-  FileText, 
-  CheckSquare, 
-  BarChart3, 
+import {
+  Users,
+  Building,
+  FileText,
+  CheckSquare,
+  BarChart3,
   LogOut,
   LayoutDashboard,
   User,
@@ -29,7 +29,7 @@ export const Sidebar: React.FC = () => {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
   const toggleMenu = (label: string) => {
-    setOpenMenus(prev => 
+    setOpenMenus(prev =>
       prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
     );
   };
@@ -40,7 +40,7 @@ export const Sidebar: React.FC = () => {
 
   const getLinks = () => {
     if (!config?.menus) return [];
-    
+
     const isSuperAdmin = config.active_role === 'SUPER ADMIN' || user?.role === 'SUPER ADMIN';
 
     return config.menus
@@ -83,7 +83,7 @@ export const Sidebar: React.FC = () => {
       sidebarCollapsed ? "w-[80px] -translate-x-full lg:translate-x-0" : "w-[260px] translate-x-0"
     )}>
       {/* Sidebar Toggle Button (Desktop Only) */}
-      <button 
+      <button
         onClick={toggleSidebar}
         className="absolute -right-3 top-20 w-6 h-6 bg-accent rounded-full hidden lg:flex items-center justify-center text-white shadow-lg shadow-accent/40 border border-white/20 transition-transform active:scale-95"
       >
@@ -95,7 +95,7 @@ export const Sidebar: React.FC = () => {
           <span className="font-extrabold text-xl text-white tracking-widest">C</span>
         </div>
         {!sidebarCollapsed && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             className="overflow-hidden"
@@ -130,7 +130,7 @@ export const Sidebar: React.FC = () => {
                     </>
                   )}
                 </button>
-                
+
                 <AnimatePresence>
                   {isOpen && !sidebarCollapsed && (
                     <motion.div
@@ -183,7 +183,7 @@ export const Sidebar: React.FC = () => {
                   <link.icon className={cn("w-[20px] h-[20px] shrink-0 transition-transform duration-500 group-hover:scale-110", isActive ? "text-accent" : "text-white/30 group-hover:text-white/60")} />
                   {!sidebarCollapsed && <span>{link.label}</span>}
                   {isActive && (
-                    <motion.div 
+                    <motion.div
                       layoutId="active-nav-indicator"
                       className={cn("absolute bg-accent rounded-full", sidebarCollapsed ? "inset-0 bg-accent/5 -z-10" : "left-0 top-1/2 -translate-y-1/2 w-1 h-6")}
                     />
@@ -203,13 +203,13 @@ export const Sidebar: React.FC = () => {
           <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-accent/20 transition-colors" />
           <div className="relative z-10 flex flex-col items-center">
             {sidebarCollapsed ? (
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" title="Production v2.4" />
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" title="Production v2.0" />
             ) : (
               <>
                 <p className="text-[0.65rem] font-bold text-white/30 uppercase tracking-[0.1em] mb-1">Status</p>
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-[0.7rem] font-bold text-white/90">Production v2.4</span>
+                  <span className="text-[0.7rem] font-bold text-white/90">Production v2.0</span>
                 </div>
               </>
             )}

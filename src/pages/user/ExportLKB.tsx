@@ -608,7 +608,7 @@ export const ExportLKB: React.FC = () => {
                 <div className="grid grid-cols-[110px_10px_1fr] gap-y-1.5 text-xs font-semibold text-slate-800 mb-6 max-w-2xl border bg-slate-50/50 p-4 rounded-xl border-slate-200">
                   <span className="text-slate-500 font-medium">Nama Pegawai</span>
                   <span>:</span>
-                  <span className="uppercase text-slate-900 font-bold">{customPegawaiName || '-'}</span>
+                  <span className="text-slate-900 font-bold">{customPegawaiName || '-'}</span>
 
                   <span className="text-slate-500 font-medium">NIP</span>
                   <span>:</span>
@@ -704,7 +704,7 @@ export const ExportLKB: React.FC = () => {
                         {/* Placeholder signature area */}
                         <div className="w-40 border-b border-dashed border-slate-300/40 no-print" />
                       </div>
-                      <p className="uppercase text-slate-900">
+                      <p className="text-slate-900">
                         {customAtasanName ? `( ${customAtasanName} )` : '( ........................................ )'}
                       </p>
                       <p className="text-[0.65rem] md:text-xs font-semibold text-slate-600 mt-1">
@@ -723,7 +723,7 @@ export const ExportLKB: React.FC = () => {
                         {/* Placeholder signature area */}
                         <div className="w-40 border-b border-dashed border-slate-300/40 no-print" />
                       </div>
-                      <p className="uppercase text-slate-900">
+                      <p className="text-slate-900">
                         ( {customPegawaiName || '........................................'} )
                       </p>
                       <p className="text-[0.65rem] md:text-xs font-semibold text-slate-600 mt-1">
