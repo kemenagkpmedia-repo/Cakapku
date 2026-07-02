@@ -258,11 +258,11 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                   key={`${option.value}-${idx}`}
                   onClick={() => handleSelectOption(option.value)}
                   className={cn(
-                    'px-3 py-2 font-medium cursor-pointer select-none hover:bg-accent/5 hover:text-accent transition-colors text-left flex items-center justify-between text-xs text-text-main',
+                    'px-3 py-2 font-medium cursor-pointer select-none hover:bg-accent/5 hover:text-accent transition-colors text-left flex items-center justify-between text-xs text-text-main w-full',
                     isSelected && 'bg-accent/10 text-accent font-semibold'
                   )}
                 >
-                  <span className="truncate">{option.label}</span>
+                  <span className="whitespace-normal break-words w-full">{option.label}</span>
                 </div>
               );
             })
@@ -290,7 +290,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             className
           )}
         >
-          <span className={cn('truncate', !selectedOption && 'text-text-muted font-normal')}>
+          <span className={cn('whitespace-normal break-words w-full py-1', !selectedOption && 'text-text-muted font-normal')}>
             {selectedOption ? selectedOption.label : placeholder || '-- Pilih --'}
           </span>
           <div className="flex items-center gap-1.5 shrink-0 text-text-muted ml-2">
