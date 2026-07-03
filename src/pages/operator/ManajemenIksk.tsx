@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { usePerkinStore } from '../../store/perkinStore';
-import { Activity, Plus, Pencil, Trash2, RefreshCw, ChevronRight, Target, Info } from 'lucide-react';
+import { Activity, Plus, Pencil, Trash2, RefreshCw, ChevronRight, Target, Info, ChevronDown } from 'lucide-react';
 import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
+import { cn } from '../../utils/cn';
 
 export const ManajemenIksk: React.FC = () => {
   const { 
@@ -28,6 +29,7 @@ export const ManajemenIksk: React.FC = () => {
     target_satuan: '', 
     id_sasaran_kegiatan: 0 
   });
+  const [expandedSKIds, setExpandedSKIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetchPeriodes();
@@ -35,8 +37,19 @@ export const ManajemenIksk: React.FC = () => {
   }, [fetchPeriodes, fetchPerkins]);
 
   const allSKs = perkins.flatMap(p => p.sasaran_kegiatans || []);
-  
   const filteredSKs = allSKs.filter(sk => !selectedSKId || sk.id === Number(selectedSKId));
+
+  // Default collapse: closed (empty array)
+  // Biarkan default state close.
+
+  const toggleExpandSK = (id: number) => {
+    setExpandedSKIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const expandAll = () => setExpandedSKIds(filteredSKs.map(sk => sk.id));
+  const collapseAll = () => setExpandedSKIds([]);
 
   const handleSave = async () => {
     try {
@@ -110,90 +123,117 @@ export const ManajemenIksk: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {filteredSKs.map((sk) => (
-            <div key={sk.id} className="space-y-4">
-              <div className="flex items-center gap-3 px-4">
-                <div className="p-2 bg-accent/10 rounded-lg">
-                  <Target className="w-5 h-5 text-accent" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-text-header tracking-tight">{sk.nama_sasaran}</h2>
-                  <p className="text-[0.6rem] text-text-muted font-bold uppercase tracking-[0.15em] mt-0.5">
-                    {perkins.find(p => p.id === sk.id_perkin)?.nama_perkin}
-                  </p>
-                </div>
-                <Button 
-                  size="sm" 
-                  className="rounded-lg h-9 text-[0.65rem] font-bold uppercase tracking-widest gap-2"
-                  onClick={() => {
-                    setEditingIKSK(null);
-                    setNewIKSK({ indikator: '', target_vol: '', target_satuan: '', id_sasaran_kegiatan: sk.id });
-                    setIsModalOpen(true);
-                  }}
-                >
-                  <Plus className="w-3.5 h-3.5" /> Tambah IKSK
-                </Button>
-              </div>
+          <div className="flex justify-end gap-2 px-4">
+            <Button
+              variant="ghost"
+              onClick={expandAll}
+              className="text-[0.65rem] font-bold uppercase tracking-wider h-8 px-3 rounded-lg text-accent hover:bg-accent/5"
+            >
+              Expand All
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={collapseAll}
+              className="text-[0.65rem] font-bold uppercase tracking-wider h-8 px-3 rounded-lg text-text-muted hover:bg-slate-100"
+            >
+              Collapse All
+            </Button>
+          </div>
 
-              <div className="bg-white rounded-[2.5rem] border border-border shadow-sm overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-border">
-                      <th className="py-4 px-8 text-left text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-12">No</th>
-                      <th className="py-4 px-6 text-left text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Indikator Kinerja</th>
-                      <th className="py-4 px-6 text-center text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-32">Target</th>
-                      <th className="py-4 px-6 text-center text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-32">Satuan</th>
-                      <th className="py-4 px-6 text-right text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-24">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/40">
-                    {(sk.iksks || []).map((iksk, idx) => (
-                      <tr key={iksk.id} className="hover:bg-slate-50/30 transition-colors group/row">
-                        <td className="py-4 px-8 text-text-muted/60 font-black text-xs">{idx + 1}</td>
-                        <td className="py-4 px-6 font-semibold text-text-main leading-relaxed">{iksk.indikator}</td>
-                        <td className="py-4 px-6 text-center font-extrabold text-text-header group-hover/row:text-accent transition-colors">{iksk.target_vol}</td>
-                        <td className="py-4 px-6 text-center">
-                          <span className="px-3 py-1 bg-slate-100 rounded-lg text-text-muted font-bold text-[0.65rem] uppercase tracking-widest group-hover/row:bg-accent/10 group-hover/row:text-accent transition-all">
-                            {iksk.target_satuan}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6 text-right">
-                          <div className="flex justify-end gap-1">
-                            <button 
-                              onClick={() => {
-                                setEditingIKSK(iksk as any);
-                                setNewIKSK({ 
-                                  indikator: iksk.indikator, 
-                                  target_vol: iksk.target_vol || '', 
-                                  target_satuan: iksk.target_satuan || '', 
-                                  id_sasaran_kegiatan: sk.id 
-                                });
-                                setIsModalOpen(true);
-                              }}
-                              className="p-2 rounded-lg text-slate-300 hover:text-accent hover:bg-accent/5 transition-all"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(iksk.id)}
-                              className="p-2 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {(sk.iksks || []).length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="py-8 text-center text-sm text-text-muted italic">Belum ada indikator yang ditambahkan.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+          {filteredSKs.map((sk) => {
+            const isExpanded = expandedSKIds.includes(sk.id);
+            return (
+              <div key={sk.id} className="space-y-4 bg-slate-50/20 p-5 rounded-3xl border border-border/40">
+                <div 
+                  onClick={() => toggleExpandSK(sk.id)}
+                  className="flex items-center gap-3 px-4 cursor-pointer select-none group/hdr"
+                >
+                  <ChevronDown className={cn("w-5 h-5 text-text-muted transition-transform duration-300", isExpanded ? "transform rotate-0" : "transform -rotate-90")} />
+                  <div className="p-2 bg-accent/10 rounded-lg group-hover/hdr:bg-accent/20 transition-colors">
+                    <Target className="w-5 h-5 text-accent" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold text-text-header tracking-tight group-hover/hdr:text-accent transition-colors">{sk.nama_sasaran}</h2>
+                    <p className="text-[0.6rem] text-text-muted font-bold uppercase tracking-[0.15em] mt-0.5">
+                      {perkins.find(p => p.id === sk.id_perkin)?.nama_perkin}
+                    </p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="rounded-lg h-9 text-[0.65rem] font-bold uppercase tracking-widest gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingIKSK(null);
+                      setNewIKSK({ indikator: '', target_vol: '', target_satuan: '', id_sasaran_kegiatan: sk.id });
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Tambah IKSK
+                  </Button>
+                </div>
+
+                {isExpanded && (
+                  <div className="bg-white rounded-[2.5rem] border border-border shadow-sm overflow-hidden animate-in fade-in duration-300">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-border">
+                          <th className="py-4 px-8 text-left text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-12">No</th>
+                          <th className="py-4 px-6 text-left text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Indikator Kinerja</th>
+                          <th className="py-4 px-6 text-center text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-32">Target</th>
+                          <th className="py-4 px-6 text-center text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-32">Satuan</th>
+                          <th className="py-4 px-6 text-right text-[0.65rem] font-bold text-text-muted uppercase tracking-widest w-24">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/40">
+                        {(sk.iksks || []).map((iksk, idx) => (
+                          <tr key={iksk.id} className="hover:bg-slate-50/30 transition-colors group/row">
+                            <td className="py-4 px-8 text-text-muted/60 font-black text-xs">{idx + 1}</td>
+                            <td className="py-4 px-6 font-semibold text-text-main leading-relaxed">{iksk.indikator}</td>
+                            <td className="py-4 px-6 text-center font-extrabold text-text-header group-hover/row:text-accent transition-colors">{iksk.target_vol}</td>
+                            <td className="py-4 px-6 text-center">
+                              <span className="px-3 py-1 bg-slate-100 rounded-lg text-text-muted font-bold text-[0.65rem] uppercase tracking-widest group-hover/row:bg-accent/10 group-hover/row:text-accent transition-all">
+                                {iksk.target_satuan}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <div className="flex justify-end gap-1">
+                                <button 
+                                  onClick={() => {
+                                    setEditingIKSK(iksk as any);
+                                    setNewIKSK({ 
+                                      indikator: iksk.indikator, 
+                                      target_vol: iksk.target_vol || '', 
+                                      target_satuan: iksk.target_satuan || '', 
+                                      id_sasaran_kegiatan: sk.id 
+                                    });
+                                    setIsModalOpen(true);
+                                  }}
+                                  className="p-2 rounded-lg text-slate-300 hover:text-accent hover:bg-accent/5 transition-all"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button 
+                                  onClick={() => handleDelete(iksk.id)}
+                                  className="p-2 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {(sk.iksks || []).length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-sm text-text-muted italic">Belum ada indikator yang ditambahkan.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

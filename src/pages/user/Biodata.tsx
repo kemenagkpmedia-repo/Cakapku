@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
@@ -7,20 +7,55 @@ import { Input } from '../../components/ui/Input';
 import { Label } from '../../components/ui/Label';
 import { Select } from '../../components/ui/Select';
 import { useAuthStore, User } from '../../store/authStore';
+import { useUserStore } from '../../store/userStore';
 import { useSatkerStore } from '../../store/satkerStore';
-import { User as UserIcon, Mail, Contact, Briefcase, MapPin, Phone, Save, CheckCircle } from 'lucide-react';
+import { User as UserIcon, Mail, Contact, Briefcase, Phone, Save, CheckCircle, Loader2 } from 'lucide-react';
+import api from '../../api/axios';
 
 export const Biodata: React.FC = () => {
-  const { user, updateUser } = useAuthStore();
+  const { user, token, config, login, updateUser } = useAuthStore();
+  const { updateUser: updateUserApi } = useUserStore();
   const { satkers } = useSatkerStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // ─── Fetch data segar dari DB saat komponen mount ────────────────────────────
+  useEffect(() => {
+    const fetchFresh = async () => {
+      setIsFetching(true);
+      try {
+        const res = await api.get('/me');
+        const freshUser = res.data?.user || res.data;
+        const freshConfig = res.data?.config || config;
+
+        if (freshUser && token && freshConfig) {
+          // Normalisasi: petakan gol_ruang → golongan agar konsisten di frontend
+          const normalized = {
+            ...freshUser,
+            golongan: freshUser.golongan ?? freshUser.gol_ruang,
+          };
+          login(normalized, token, freshConfig);
+        }
+      } catch (err) {
+        // Gagal fetch tidak apa-apa, gunakan data yang ada di store
+        console.warn('[Biodata] Gagal refresh dari /me, menggunakan data lokal.');
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchFresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!user) return null;
 
-  const { register, handleSubmit, formState: { errors } } = useForm<Partial<User>>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<Partial<User>>({
     defaultValues: {
-      name: user?.name || '',
+      name: user?.name || user?.nama || '',
       email: user?.email || '',
       nip: user?.nip || '',
       jabatan: user?.jabatan || '',
@@ -28,18 +63,59 @@ export const Biodata: React.FC = () => {
       golongan: user?.golongan || '',
       phone: user?.phone || '',
       address: user?.address || '',
-      satker_id: user?.satker_id,
+      satker_id: user?.satker_id ?? user?.id_satker,
     }
   });
 
-  const onSubmit = (data: Partial<User>) => {
-    updateUser(data);
-    setIsEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+  // Reset form ketika data user berubah (setelah fetch segar selesai)
+  useEffect(() => {
+    if (!isFetching) {
+      reset({
+        name: user?.name || user?.nama || '',
+        email: user?.email || '',
+        nip: user?.nip || '',
+        jabatan: user?.jabatan || '',
+        pangkat: user?.pangkat || '',
+        golongan: user?.golongan || '',
+        phone: user?.phone || '',
+        address: user?.address || '',
+        satker_id: user?.satker_id ?? user?.id_satker,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFetching]);
+
+  const onSubmit = async (data: Partial<User>) => {
+    if (!user?.id) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Kirim ke backend: petakan golongan → gol_ruang sesuai nama kolom DB
+      const payload = {
+        ...data,
+        nama: data.name,
+        gol_ruang: data.golongan,
+      };
+
+      await updateUserApi(user.id, payload);
+
+      // Sinkronkan hasil ke authStore agar tampilan langsung update
+      updateUser({ ...data });
+
+      setIsEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err: any) {
+      setSubmitError(
+        err?.response?.data?.message || 'Gagal menyimpan data. Silakan coba lagi.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const satkerName = satkers.find(s => s.id === user?.satker_id)?.name || 'Tidak Diketahui';
+  const satkerName = satkers.find(s => s.id === (user?.satker_id ?? user?.id_satker))?.name || 'Tidak Diketahui';
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -59,6 +135,14 @@ export const Biodata: React.FC = () => {
         )}
       </div>
 
+      {/* Loading data segar dari server */}
+      {isFetching && (
+        <div className="flex items-center gap-2 text-xs text-text-muted font-semibold">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Memuat data terbaru...
+        </div>
+      )}
+
       {showSuccess && (
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -69,6 +153,16 @@ export const Biodata: React.FC = () => {
             <CheckCircle className="w-5 h-5 text-emerald-600" />
           </div>
           Biodata Anda telah berhasil diperbarui!
+        </motion.div>
+      )}
+
+      {submitError && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="bg-rose-50 border border-rose-100 text-rose-700 p-4 rounded-2xl text-sm font-semibold shadow-sm"
+        >
+          {submitError}
         </motion.div>
       )}
 
@@ -118,7 +212,7 @@ export const Biodata: React.FC = () => {
           <CardHeader className="border-b border-border px-8 py-6 bg-surface">
             <CardTitle className="text-base font-extrabold flex items-center gap-2.5">
               <Contact className="w-5 h-5 text-accent" />
-              Informasi Kepegawaian & Kontak
+              Informasi Kepegawaian &amp; Kontak
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
@@ -225,17 +319,28 @@ export const Biodata: React.FC = () => {
                   <Button 
                     type="button" 
                     variant="ghost" 
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => { setIsEditing(false); setSubmitError(null); }}
+                    disabled={isSubmitting}
                     className="rounded-xl font-bold text-xs uppercase tracking-widest text-text-muted hover:bg-slate-100 px-6 h-11 transition-all"
                   >
                     Batalkan
                   </Button>
                   <Button 
                     type="submit" 
-                    className="rounded-xl flex gap-2 font-bold text-xs uppercase tracking-widest h-11 px-8 shadow-lg shadow-accent/25 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    disabled={isSubmitting}
+                    className="rounded-xl flex gap-2 font-bold text-xs uppercase tracking-widest h-11 px-8 shadow-lg shadow-accent/25 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                   >
-                    <Save className="w-4 h-4" />
-                    Simpan Profil
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        Simpan Profil
+                      </>
+                    )}
                   </Button>
                 </div>
               )}

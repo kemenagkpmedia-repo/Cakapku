@@ -589,7 +589,7 @@ export const ExportLKB: React.FC = () => {
                 {/* Print Sheet Header */}
                 <div className="flex items-center gap-5 border-b-2 border-slate-800 pb-5 mb-6">
                   <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Logo_Kementerian_Agama.svg/1200px-Logo_Kementerian_Agama.svg.png"
+                    src="https://dki.kemenag.go.id/storage/files/logo-kemenag-png-1png.png"
                     alt="Logo Kemenag"
                     className="w-14 h-14 object-contain report-header-logo shrink-0"
                     referrerPolicy="no-referrer"

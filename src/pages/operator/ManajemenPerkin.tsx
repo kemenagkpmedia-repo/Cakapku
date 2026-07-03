@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { usePerkinStore } from '../../store/perkinStore';
-import { FileSpreadsheet, Upload, Download, Trash2, CheckCircle, AlertCircle, Info, Calendar, RefreshCw, X } from 'lucide-react';
+import { FileSpreadsheet, Upload, Download, Trash2, CheckCircle, AlertCircle, Info, Calendar, RefreshCw, X, ChevronDown } from 'lucide-react';
 import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
 import * as XLSX from 'xlsx';
+import { cn } from '../../utils/cn';
 
 
 export const ManajemenPerkin: React.FC = () => {
@@ -20,11 +21,24 @@ export const ManajemenPerkin: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [namaPerkin, setNamaPerkin] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [expandedPerkinIds, setExpandedPerkinIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetchPeriodes();
     fetchPerkins();
   }, [fetchPeriodes, fetchPerkins]);
+
+  // Default collapse: closed (empty array, tidak terbuka semua)
+  // Biarkan useEffect di bawah kosong agar defaultnya close.
+
+  const toggleExpandPerkin = (id: number) => {
+    setExpandedPerkinIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const expandAll = () => setExpandedPerkinIds(perkins.map(p => p.id));
+  const collapseAll = () => setExpandedPerkinIds([]);
 
   const activePeriods = periods.filter((p) => p.isActive ?? Boolean(p.status));
 
@@ -246,35 +260,58 @@ export const ManajemenPerkin: React.FC = () => {
             <p className="text-xs font-bold text-text-muted uppercase tracking-[0.15em]">
               Menampilkan <span className="text-text-header font-extrabold">{perkins.length}</span> Sasaran Kegiatan
             </p>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={expandAll}
+                className="text-[0.65rem] font-bold uppercase tracking-wider h-8 px-3 rounded-lg text-accent hover:bg-accent/5"
+              >
+                Expand All
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={collapseAll}
+                className="text-[0.65rem] font-bold uppercase tracking-wider h-8 px-3 rounded-lg text-text-muted hover:bg-slate-100"
+              >
+                Collapse All
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-6">
-            {perkins.map((perkin, i) => (
-              <motion.div key={perkin.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <Card className="rounded-3xl border-border shadow-elegant overflow-hidden group">
-                  <CardHeader className="bg-slate-50 border-b border-border/60 px-8 py-5 group-hover:bg-white transition-colors duration-300">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-extrabold text-accent flex items-center gap-2 tracking-tight">
-                        <div className="w-1.5 h-6 bg-accent rounded-full opacity-50" />
-                        {perkin.nama_perkin || perkin.name}
-                      </CardTitle>
-                      <div className="flex items-center gap-3">
-                        <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-lg">
-                          <span className="text-[0.6rem] font-black text-accent uppercase tracking-widest">
-                            {periods.find((p) => p.id === (perkin.id_periode ?? perkin.period_id))?.tahun || 'Tanpa Periode'}
-                          </span>
+            {perkins.map((perkin, i) => {
+              const isExpanded = expandedPerkinIds.includes(perkin.id);
+              return (
+                <motion.div key={perkin.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <Card className="rounded-3xl border-border shadow-elegant overflow-hidden group">
+                    <CardHeader 
+                      onClick={() => toggleExpandPerkin(perkin.id)}
+                      className="bg-slate-50 border-b border-border/60 px-8 py-5 group-hover:bg-white transition-colors duration-300 cursor-pointer flex select-none"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <CardTitle className="text-sm font-extrabold text-accent flex items-center gap-2 tracking-tight">
+                          <ChevronDown className={cn("w-4 h-4 text-text-muted transition-transform duration-300", isExpanded ? "transform rotate-0" : "transform -rotate-90")} />
+                          <div className="w-1.5 h-6 bg-accent rounded-full opacity-50" />
+                          {perkin.nama_perkin || perkin.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-lg">
+                            <span className="text-[0.6rem] font-black text-accent uppercase tracking-widest">
+                              {periods.find((p) => p.id === (perkin.id_periode ?? perkin.period_id))?.tahun || 'Tanpa Periode'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleDelete(perkin.id)}
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border border-transparent hover:border-rose-100"
+                            title="Hapus Perkin"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleDelete(perkin.id)}
-                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border border-transparent hover:border-rose-100"
-                          title="Hapus Perkin"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
+                    </CardHeader>
+                    {isExpanded && (
+                      <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <table className="w-full text-[0.875rem]">
                         <thead>
@@ -328,9 +365,11 @@ export const ManajemenPerkin: React.FC = () => {
                       </table>
                     </div>
                   </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    )}
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
 
           <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-6 flex items-start gap-4 shadow-sm">
