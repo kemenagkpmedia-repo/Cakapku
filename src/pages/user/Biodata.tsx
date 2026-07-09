@@ -15,7 +15,7 @@ import api from '../../api/axios';
 export const Biodata: React.FC = () => {
   const { user, token, config, login, updateUser } = useAuthStore();
   const { updateUser: updateUserApi } = useUserStore();
-  const { satkers } = useSatkerStore();
+  const { satkers, fetchSatkers } = useSatkerStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +24,7 @@ export const Biodata: React.FC = () => {
 
   // ─── Fetch data segar dari DB saat komponen mount ────────────────────────────
   useEffect(() => {
+    fetchSatkers();
     const fetchFresh = async () => {
       setIsFetching(true);
       try {
@@ -115,7 +116,7 @@ export const Biodata: React.FC = () => {
     }
   };
 
-  const satkerName = satkers.find(s => s.id === (user?.satker_id ?? user?.id_satker))?.name || 'Tidak Diketahui';
+  const satkerName = satkers.find(s => s.id === (user?.satker_id ?? user?.id_satker))?.nama_satker || satkers.find(s => s.id === (user?.satker_id ?? user?.id_satker))?.name || 'Tidak Diketahui';
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -260,12 +261,27 @@ export const Biodata: React.FC = () => {
                   {isEditing ? (
                     <Select 
                       options={[
-                        { label: 'III/a', value: 'III/a' },
-                        { label: 'III/b', value: 'III/b' },
-                        { label: 'III/c', value: 'III/c' },
-                        { label: 'III/d', value: 'III/d' },
-                        { label: 'IV/a', value: 'IV/a' },
-                        { label: 'IV/b', value: 'IV/b' },
+                        { label: '-- Pilih Golongan --', value: '' },
+                        { label: '── PNS Golongan II ──', value: '', disabled: true },
+                        { label: 'II/a - Pengatur Muda', value: 'II/a' },
+                        { label: 'II/b - Pengatur Muda Tk.I', value: 'II/b' },
+                        { label: 'II/c - Pengatur', value: 'II/c' },
+                        { label: 'II/d - Pengatur Tk.I', value: 'II/d' },
+                        { label: '── PNS Golongan III ──', value: '', disabled: true },
+                        { label: 'III/a - Penata Muda', value: 'III/a' },
+                        { label: 'III/b - Penata Muda Tk.I', value: 'III/b' },
+                        { label: 'III/c - Penata', value: 'III/c' },
+                        { label: 'III/d - Penata Tk.I', value: 'III/d' },
+                        { label: '── PNS Golongan IV ──', value: '', disabled: true },
+                        { label: 'IV/a - Pembina', value: 'IV/a' },
+                        { label: 'IV/b - Pembina Tk.I', value: 'IV/b' },
+                        { label: 'IV/c - Pembina Utama Muda', value: 'IV/c' },
+                        { label: 'IV/d - Pembina Utama Madya', value: 'IV/d' },
+                        { label: '── PPPK ──', value: '', disabled: true },
+                        { label: 'PPPK III', value: 'PPPK III' },
+                        { label: 'PPPK V', value: 'PPPK V' },
+                        { label: 'PPPK VII', value: 'PPPK VII' },
+                        { label: 'PPPK IX', value: 'PPPK IX' },
                       ]}
                       {...register('golongan')}
                       className="h-12 rounded-xl font-semibold"

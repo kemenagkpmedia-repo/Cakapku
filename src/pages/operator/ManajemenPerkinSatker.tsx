@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { usePerkinStore } from '../../store/perkinStore';
 import { useSatkerStore } from '../../store/satkerStore';
 import { useAuthStore } from '../../store/authStore';
-import { Building, Check, Save, AlertCircle, ChevronRight, CheckCircle2, Loader2, Lock } from 'lucide-react';
+import { Building, Check, Save, AlertCircle, ChevronRight, CheckCircle2, Loader2, Lock, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export const ManajemenPerkinSatker: React.FC = () => {
@@ -16,6 +16,7 @@ export const ManajemenPerkinSatker: React.FC = () => {
   const [tempSatkerIds, setTempSatkerIds] = useState<number[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [collapsedSatkerIds, setCollapsedSatkerIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetchPerkins();
@@ -102,7 +103,7 @@ export const ManajemenPerkinSatker: React.FC = () => {
     <div className="space-y-8 pb-12">
       <div>
         <h1 className="text-3xl font-extrabold text-text-header tracking-tight">Manajemen Perkin Satker</h1>
-        <p className="text-sm text-text-muted mt-2 font-medium">Lakukan plotting dan penugasan Sasaran Kegiatan (Perkin) ke masing-masing Satuan Kerja.</p>
+        <p className="text-sm text-text-muted mt-2 font-medium">Lakukan plotting and penugasan Sasaran Kegiatan (Perkin) ke masing-masing Satuan Kerja.</p>
       </div>
 
       {showSuccess && (
@@ -224,7 +225,33 @@ export const ManajemenPerkinSatker: React.FC = () => {
                         // If buildHierarchy returns empty due to some parent_id mismatches, fall back to default satkers
                         const listToRender = sortedSatkers.length > 0 ? sortedSatkers : satkers;
 
+                        const hasChildren = (satkerId: number) => {
+                          return satkers.some(s => s.parent_id === satkerId);
+                        };
+
+                        const isSatkerVisible = (satker: any) => {
+                          let current = satker;
+                          while (current.parent_id) {
+                            if (collapsedSatkerIds.includes(current.parent_id)) {
+                              return false;
+                            }
+                            const parent = satkers.find(s => s.id === current.parent_id);
+                            if (!parent) break;
+                            current = parent;
+                          }
+                          return true;
+                        };
+
+                        const toggleCollapseSatker = (satkerId: number, e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          setCollapsedSatkerIds(prev =>
+                            prev.includes(satkerId) ? prev.filter(id => id !== satkerId) : [...prev, satkerId]
+                          );
+                        };
+
                         return listToRender.map((satker) => {
+                          if (!isSatkerVisible(satker)) return null;
+
                           const isSelected = tempSatkerIds.includes(satker.id);
                           const isManageable = manageableSatkerIds.includes(satker.id);
                           const indent = (satker.level ?? 0) * 24; // 24px indent per level
@@ -244,6 +271,16 @@ export const ManajemenPerkinSatker: React.FC = () => {
                               )}
                             >
                               <div className="flex items-center gap-4">
+                                {hasChildren(satker.id) ? (
+                                  <button
+                                    onClick={(e) => toggleCollapseSatker(satker.id, e)}
+                                    className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                                  >
+                                    <ChevronDown className={cn("w-4 h-4 text-text-muted transition-transform duration-200", collapsedSatkerIds.includes(satker.id) ? "transform -rotate-90" : "transform rotate-0")} />
+                                  </button>
+                                ) : (
+                                  <div className="w-7 h-7" />
+                                )}
                                 <div className={cn(
                                   'w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500', 
                                   isSelected 

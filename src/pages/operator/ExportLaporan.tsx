@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../../store/authStore';
 import { useSatkerStore } from '../../store/satkerStore';
@@ -298,49 +299,52 @@ export const ExportLaporan: React.FC = () => {
       </div>
 
       {/* Bulk Download Status Modal overlay */}
-      <AnimatePresence>
-        {bulkDownloadStatus && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          >
+      {ReactDOM.createPortal(
+        <AnimatePresence>
+          {bulkDownloadStatus && (
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="bg-white rounded-3xl p-8 border border-border shadow-2xl max-w-sm w-full text-center space-y-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] flex items-center justify-center p-4"
             >
-              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center text-accent mx-auto animate-spin">
-                <Loader2 className="w-8 h-8" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-black text-text-header tracking-tight text-lg">Mengunduh Dokumen LKB</h3>
-                {activeDownloadIndex !== null && (
-                  <p className="text-xs font-black uppercase text-accent tracking-widest">
-                    Proses: {activeDownloadIndex} dari {checkedIds.length} Pegawai
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                className="bg-white rounded-3xl p-8 border border-border shadow-2xl max-w-sm w-full text-center space-y-6"
+              >
+                <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center text-accent mx-auto animate-spin">
+                  <Loader2 className="w-8 h-8" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-black text-text-header tracking-tight text-lg">Mengunduh Dokumen LKB</h3>
+                  {activeDownloadIndex !== null && (
+                    <p className="text-xs font-black uppercase text-accent tracking-widest">
+                      Proses: {activeDownloadIndex} dari {checkedIds.length} Pegawai
+                    </p>
+                  )}
+                  <p className="text-sm font-bold text-text-main leading-relaxed">
+                    {activeDownloadingEmp}
                   </p>
-                )}
-                <p className="text-sm font-bold text-text-main leading-relaxed">
-                  {activeDownloadingEmp}
-                </p>
-                <p className="text-xs text-text-muted mt-1">
-                  {bulkDownloadStatus}
-                </p>
-              </div>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                {activeDownloadIndex !== null && (
-                  <div
-                    className="bg-accent h-full transition-all duration-300"
-                    style={{ width: `${(activeDownloadIndex / checkedIds.length) * 100}%` }}
-                  />
-                )}
-              </div>
+                  <p className="text-xs text-text-muted mt-1">
+                    {bulkDownloadStatus}
+                  </p>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  {activeDownloadIndex !== null && (
+                    <div
+                      className="bg-accent h-full transition-all duration-300"
+                      style={{ width: `${(activeDownloadIndex / checkedIds.length) * 100}%` }}
+                    />
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

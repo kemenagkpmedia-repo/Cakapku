@@ -138,14 +138,7 @@ export const RiwayatKinerja: React.FC = () => {
             {
               header: 'Tanggal',
               accessor: (item: any) => (
-                <div className="flex flex-col">
-                  <span className="text-[0.75rem] font-black text-text-header uppercase tracking-widest">{item.tanggal}</span>
-                  {item.waktu && (
-                    <span className="text-[0.6rem] font-bold text-text-muted flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {item.waktu}
-                    </span>
-                  )}
-                </div>
+                <span className="text-[0.75rem] font-black text-text-header uppercase tracking-widest">{item.tanggal}</span>
               ),
               className: 'w-32'
             },

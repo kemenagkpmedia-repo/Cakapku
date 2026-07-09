@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -221,47 +222,50 @@ export const ManajemenSk: React.FC = () => {
       )}
 
       {/* Modal Add/Edit */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl border border-border overflow-hidden"
-            >
-              <div className="px-8 py-6 bg-slate-50 border-b border-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-extrabold text-text-header tracking-tight">
-                    {editingSK ? 'Edit Sasaran Kegiatan' : 'Tambah Sasaran Kegiatan'}
-                  </h3>
-                  <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-1">
-                    {perkins.find(p => p.id === newSK.id_perkin)?.nama_perkin}
-                  </p>
+      {ReactDOM.createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl border border-border overflow-hidden"
+              >
+                <div className="px-8 py-6 bg-slate-50 border-b border-border flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-extrabold text-text-header tracking-tight">
+                      {editingSK ? 'Edit Sasaran Kegiatan' : 'Tambah Sasaran Kegiatan'}
+                    </h3>
+                    <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-1">
+                      {perkins.find(p => p.id === newSK.id_perkin)?.nama_perkin}
+                    </p>
+                  </div>
+                  <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-xl hover:bg-white transition-colors">
+                    <ChevronRight className="w-6 h-6 text-text-muted rotate-90" />
+                  </button>
                 </div>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 rounded-xl hover:bg-white transition-colors">
-                  <ChevronRight className="w-6 h-6 text-text-muted rotate-90" />
-                </button>
-              </div>
-              <div className="p-8 space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Nama Sasaran Kegiatan</label>
-                  <textarea 
-                    className="w-full rounded-2xl border-border bg-slate-50 p-4 font-semibold text-sm focus:ring-accent focus:border-accent min-h-[120px]"
-                    placeholder="Masukkan nama sasaran kegiatan..."
-                    value={newSK.nama_sasaran}
-                    onChange={(e) => setNewSK({...newSK, nama_sasaran: e.target.value})}
-                  />
+                <div className="p-8 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Nama Sasaran Kegiatan</label>
+                    <textarea 
+                      className="w-full rounded-2xl border-border bg-slate-50 p-4 font-semibold text-sm focus:ring-accent focus:border-accent min-h-[120px]"
+                      placeholder="Masukkan nama sasaran kegiatan..."
+                      value={newSK.nama_sasaran}
+                      onChange={(e) => setNewSK({...newSK, nama_sasaran: e.target.value})}
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem]" onClick={() => setIsModalOpen(false)}>Batal</Button>
+                    <Button className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem] shadow-lg shadow-accent/20" onClick={handleSave}>Simpan Data</Button>
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem]" onClick={() => setIsModalOpen(false)}>Batal</Button>
-                  <Button className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem] shadow-lg shadow-accent/20" onClick={handleSave}>Simpan Data</Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

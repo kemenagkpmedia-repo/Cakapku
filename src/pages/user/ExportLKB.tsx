@@ -52,9 +52,9 @@ export const ExportLKB: React.FC = () => {
 
   // TTE Anchor States
   const [enableAnchorAtasan, setEnableAnchorAtasan] = useState<boolean>(false);
-  const [anchorAtasanText, setAnchorAtasanText] = useState<string>('$ttd_atasan');
+  const [anchorAtasanText, setAnchorAtasanText] = useState<string>('${ttd_pengirim2}');
   const [enableAnchorPegawai, setEnableAnchorPegawai] = useState<boolean>(false);
-  const [anchorPegawaiText, setAnchorPegawaiText] = useState<string>('$ttd_pegawai');
+  const [anchorPegawaiText, setAnchorPegawaiText] = useState<string>('$ttd_pengirim1');
 
   // Supervisor and Employee details for signature autofill
   const [customAtasanName, setCustomAtasanName] = useState<string>('');
@@ -786,7 +786,7 @@ export const ExportLKB: React.FC = () => {
                       type="text"
                       value={anchorAtasanText}
                       onChange={(e) => setAnchorAtasanText(e.target.value)}
-                      placeholder="Contoh: $ttd_atasan"
+                      placeholder="Contoh: ${ttd_pengirim2}"
                       className="h-10 rounded-xl bg-white border-slate-200 text-xs font-semibold"
                     />
                   )}
