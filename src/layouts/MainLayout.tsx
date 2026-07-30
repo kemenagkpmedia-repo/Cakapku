@@ -108,7 +108,7 @@ export const MainLayout: React.FC = () => {
                 duration: 0.35, 
                 ease: [0.22, 1, 0.36, 1] 
               }}
-              className="max-w-[1600px] mx-auto w-full pt-4"
+              className="w-full pt-4"
             >
               <Outlet />
             </motion.div>

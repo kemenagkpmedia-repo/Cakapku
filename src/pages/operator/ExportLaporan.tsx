@@ -273,7 +273,7 @@ export const ExportLaporan: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-12 px-4">
+    <div className="w-full space-y-8 pb-12">
       {/* Header section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 px-2 py-4">
         <motion.div

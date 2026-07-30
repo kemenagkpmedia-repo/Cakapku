@@ -200,7 +200,7 @@ export const ExportLKB: React.FC = () => {
   }, [showColumns]);
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-24 space-y-8 px-4 sm:px-6">
+    <div className="w-full pb-24 space-y-8">
       {/* Dynamic Theme & Font Injection for Printing (Aggressive Resets) */}
       <style>{`
         @media print {
@@ -589,10 +589,9 @@ export const ExportLKB: React.FC = () => {
                 {/* Print Sheet Header */}
                 <div className="flex items-center gap-5 border-b-2 border-slate-800 pb-5 mb-6">
                   <img
-                    src="https://dki.kemenag.go.id/storage/files/logo-kemenag-png-1png.png"
+                    src={`${(import.meta.env.VITE_LINK_API || '').replace(/\/api\/?$/, '')}/v2/logo-kemenag.png`}
                     alt="Logo Kemenag"
-                    className="w-14 h-14 object-contain report-header-logo shrink-0"
-                    referrerPolicy="no-referrer"
+                    className="w-14 h-14 object-contain shrink-0 report-header-logo"
                   />
                   <div className="flex-1">
                     <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight leading-snug">

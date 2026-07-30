@@ -9,7 +9,7 @@ import { Select } from '../../components/ui/Select';
 import { useAuthStore, User } from '../../store/authStore';
 import { useUserStore } from '../../store/userStore';
 import { useSatkerStore } from '../../store/satkerStore';
-import { User as UserIcon, Mail, Contact, Briefcase, Phone, Save, CheckCircle, Loader2 } from 'lucide-react';
+import { User as UserIcon, Mail, Contact, Briefcase, Phone, Save, CheckCircle, Loader2, Camera } from 'lucide-react';
 import api from '../../api/axios';
 
 export const Biodata: React.FC = () => {
@@ -21,6 +21,41 @@ export const Biodata: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setSubmitError(null);
+
+    const formData = new FormData();
+    formData.append('foto', file);
+
+    try {
+      const res = await api.post('/me/foto', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data?.foto_url) {
+        updateUser({
+          foto: res.data.foto,
+          foto_url: res.data.foto_url,
+        });
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      }
+    } catch (err: any) {
+      setSubmitError(
+        err?.response?.data?.message || 'Gagal mengunggah foto profil.'
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // ─── Fetch data segar dari DB saat komponen mount ────────────────────────────
   useEffect(() => {
@@ -60,10 +95,7 @@ export const Biodata: React.FC = () => {
       email: user?.email || '',
       nip: user?.nip || '',
       jabatan: user?.jabatan || '',
-      pangkat: user?.pangkat || '',
       golongan: user?.golongan || '',
-      phone: user?.phone || '',
-      address: user?.address || '',
       satker_id: user?.satker_id ?? user?.id_satker,
     }
   });
@@ -76,10 +108,7 @@ export const Biodata: React.FC = () => {
         email: user?.email || '',
         nip: user?.nip || '',
         jabatan: user?.jabatan || '',
-        pangkat: user?.pangkat || '',
         golongan: user?.golongan || '',
-        phone: user?.phone || '',
-        address: user?.address || '',
         satker_id: user?.satker_id ?? user?.id_satker,
       });
     }
@@ -172,13 +201,32 @@ export const Biodata: React.FC = () => {
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <Card className="rounded-3xl border-border shadow-elegant overflow-hidden group">
             <CardContent className="pt-10 pb-8 flex flex-col items-center text-center px-6">
-              <div className="relative mb-6">
-                <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white text-4xl font-extrabold shadow-2xl shadow-accent/30 border-4 border-white transform transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
-                  {(user?.name || user?.nama || '?').charAt(0).toUpperCase()}
+              <div className="relative mb-6 group/avatar">
+                <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white text-4xl font-extrabold shadow-2xl shadow-accent/30 border-4 border-white transform transition-transform duration-500 group-hover:scale-105 overflow-hidden">
+                  {isUploading ? (
+                    <Loader2 className="w-10 h-10 animate-spin text-white" />
+                  ) : user?.foto_url ? (
+                    <img src={user.foto_url} alt={user?.name || user?.nama} className="w-full h-full object-cover" />
+                  ) : (
+                    (user?.name || user?.nama || '?').charAt(0).toUpperCase()
+                  )}
                 </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-border shadow-lg flex items-center justify-center">
-                  <UserIcon className="w-5 h-5 text-accent" />
-                </div>
+                
+                {/* Camera upload overlay */}
+                <label 
+                  htmlFor="avatar-input" 
+                  className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-border shadow-lg flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors group-hover/avatar:scale-110 duration-300"
+                >
+                  <Camera className="w-5 h-5 text-accent" />
+                  <input
+                    type="file"
+                    id="avatar-input"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
               </div>
               <h2 className="text-xl font-extrabold text-text-header tracking-tight">{user?.name || user?.nama || 'Pengguna'}</h2>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/5 text-accent text-[0.65rem] font-bold uppercase tracking-widest mt-2 border border-accent/10">
@@ -241,21 +289,7 @@ export const Biodata: React.FC = () => {
                       {user?.jabatan || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
                     </p>
                   )}
-                </div>
-
-                {/* Pangkat */}
-                <div className="space-y-2">
-                  <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Pangkat</Label>
-                  {isEditing ? (
-                    <Input {...register('pangkat')} className="h-12 rounded-xl bg-slate-50 border-border focus:bg-white focus:ring-accent/20 transition-all font-semibold" placeholder="Contoh: Penata" />
-                  ) : (
-                    <p className="text-[0.9375rem] font-bold text-text-header py-3 px-4 bg-slate-50 border border-slate-100 rounded-xl">
-                      {user?.pangkat || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
-                    </p>
-                  )}
-                </div>
-
-                {/* Golongan */}
+                </div>                {/* Golongan */}
                 <div className="space-y-2">
                   <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Golongan</Label>
                   {isEditing ? (
@@ -293,19 +327,7 @@ export const Biodata: React.FC = () => {
                   )}
                 </div>
 
-                {/* Phone */}
-                <div className="space-y-2">
-                  <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">No. Telepon Aktif</Label>
-                  {isEditing ? (
-                    <Input {...register('phone')} className="h-12 rounded-xl bg-slate-50 border-border focus:bg-white focus:ring-accent/20 transition-all font-semibold" placeholder="0812..." />
-                  ) : (
-                    <p className="text-[0.9375rem] font-bold text-text-header py-3 px-4 bg-slate-50 border border-slate-100 rounded-xl">
-                      {user?.phone || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
-                    </p>
-                  )}
-                </div>
-
-                {/* Satker (Read Only) */}
+                {/* Satuan Kerja (Read Only) */}
                 <div className="space-y-2">
                   <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Satuan Kerja</Label>
                   <p className="text-[0.9375rem] font-semibold text-text-muted py-3 px-4 bg-slate-100 border border-border rounded-xl italic">
@@ -313,23 +335,6 @@ export const Biodata: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Address */}
-              <div className="space-y-2">
-                <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Alamat Lengkap Domisili</Label>
-                {isEditing ? (
-                  <textarea
-                    {...register('address')}
-                    className="w-full px-4 py-3 border border-border rounded-xl text-[0.875rem] font-semibold bg-slate-50 placeholder:text-text-muted focus:outline-none focus:border-accent focus:bg-white transition-all min-h-[100px] shadow-inner"
-                    placeholder="Masukkan alamat lengkap sesuai KTP/Domisili..."
-                  />
-                ) : (
-                  <p className="text-[0.9375rem] font-bold text-text-header py-4 px-4 bg-slate-50 border border-slate-100 rounded-xl min-h-[80px] leading-relaxed">
-                    {user?.address || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
-                  </p>
-                )}
-              </div>
-
               {isEditing && (
                 <div className="flex justify-end gap-4 pt-8 border-t border-border">
                   <Button 

@@ -21,6 +21,8 @@ export interface User {
   assigned_roles?: Role[];
   id_atasan?: number;
   sub_unit?: string;
+  foto?: string;
+  foto_url?: string;
 }
 
 export interface UIConfig {
