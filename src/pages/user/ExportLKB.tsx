@@ -80,7 +80,7 @@ export const ExportLKB: React.FC = () => {
   // Dynamic column visibility toggles
   const [showColumns, setShowColumns] = useState({
     status: true,
-    perkin: true,
+    perkin: false,
     iksk: true,
     volume: true,
     uraian: true
@@ -632,9 +632,7 @@ export const ExportLKB: React.FC = () => {
                         {showColumns.status && (
                           <th className="border border-slate-400 p-2.5 text-center w-24 col-status">Status</th>
                         )}
-                        {showColumns.perkin && (
-                          <th className="border border-slate-400 p-2.5 text-center w-36 col-perkin">SK / Perkin</th>
-                        )}
+
                         {showColumns.iksk && (
                           <th className="border border-slate-400 p-2.5 text-center w-40 col-iksk">Indikator Kinerja</th>
                         )}
@@ -658,11 +656,6 @@ export const ExportLKB: React.FC = () => {
                             {showColumns.status && (
                               <td className="border border-slate-400 p-2.5 text-center text-slate-700 font-medium col-status">
                                 {record.status_kehadiran}
-                              </td>
-                            )}
-                            {showColumns.perkin && (
-                              <td className="border border-slate-400 p-2.5 font-semibold text-slate-900 leading-normal col-perkin">
-                                {record.perkin_name}
                               </td>
                             )}
                             {showColumns.iksk && (

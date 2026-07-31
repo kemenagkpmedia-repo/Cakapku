@@ -35,6 +35,57 @@ export const ManajemenUser: React.FC = () => {
   }, [fetchUsers, fetchSatkers]);
 
 
+  const getDescendantSatkers = (adminSatkerId: any, allSatkers: any[]) => {
+    try {
+      if (!Array.isArray(allSatkers)) return [];
+      const result: any[] = [];
+      const visited = new Set<string>();
+      
+      const findChildren = (parentId: any) => {
+        const pIdStr = parentId?.toString();
+        if (!pIdStr || visited.has(pIdStr)) return;
+        visited.add(pIdStr);
+        
+        const children = allSatkers.filter(s => s && s.parent_id?.toString() === pIdStr);
+        for (const child of children) {
+          if (child && child.id) {
+            result.push(child);
+            findChildren(child.id);
+          }
+        }
+      };
+
+      const targetIdStr = adminSatkerId?.toString();
+      if (!targetIdStr) return [];
+      
+      const rootSatker = allSatkers.find(s => s && s.id?.toString() === targetIdStr);
+      if (rootSatker) {
+        result.push(rootSatker);
+        findChildren(adminSatkerId);
+      }
+      return result;
+    } catch (e) {
+      console.error("Error in getDescendantSatkers:", e);
+      return [];
+    }
+  };
+
+  const getSelectableSatkers = () => {
+    try {
+      if (config?.active_role === 'SUPER ADMIN') {
+        return satkers || [];
+      }
+      if (config?.active_role === 'ADMIN' && currentUser?.id_satker) {
+        return getDescendantSatkers(currentUser.id_satker, satkers || []);
+      }
+      return satkers || [];
+    } catch (e) {
+      console.error("Error in getSelectableSatkers:", e);
+      return satkers || [];
+    }
+  };
+
+
   const [formData, setFormData] = useState({
     nama: '',
     username: '',
@@ -553,7 +604,7 @@ export const ManajemenUser: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, id_satker: e.target.value })}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
-                  ...satkers.map(s => ({ 
+                  ...getSelectableSatkers().map(s => ({ 
                     label: `${'—'.repeat(s.level ?? 0)} ${s.nama_satker || s.name || ''} (Lvl ${s.level ?? 0})`, 
                     value: s.id.toString() 
                   }))
@@ -663,10 +714,10 @@ export const ManajemenUser: React.FC = () => {
               <Select
                 value={formData.id_satker}
                 onChange={(e) => setFormData({ ...formData, id_satker: e.target.value })}
-                disabled={config?.active_role !== 'SUPER ADMIN'}
+                disabled={config?.active_role !== 'SUPER ADMIN' && config?.active_role !== 'ADMIN'}
                 options={[
                   { label: '-- Pilih Satker --', value: '' },
-                  ...satkers.map(s => ({ 
+                  ...getSelectableSatkers().map(s => ({ 
                     label: `${'—'.repeat(s.level ?? 0)} ${s.nama_satker || s.name || ''} (Lvl ${s.level ?? 0})`, 
                     value: s.id.toString() 
                   }))

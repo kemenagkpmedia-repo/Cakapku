@@ -39,8 +39,12 @@ export const MonitoringKinerja: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchBawahanKinerja(filterMonth, filterYear);
-  }, [fetchBawahanKinerja, filterMonth, filterYear]);
+    if (selectedUserId) {
+      fetchBawahanKinerja(filterMonth, filterYear, selectedUserId);
+    } else {
+      fetchBawahanKinerja(filterMonth, filterYear);
+    }
+  }, [fetchBawahanKinerja, filterMonth, filterYear, selectedUserId]);
 
   // Processing for the list view
   const subordinates = useMemo(() => {

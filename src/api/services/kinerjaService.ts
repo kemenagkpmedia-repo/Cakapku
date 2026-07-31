@@ -52,6 +52,6 @@ export const kinerjaService = {
   delete: (id: number) => api.delete(`/kinerja-harian/${id}`),
   
   // Method ini sekarang mengembalikan daftar User (Bawahan) beserta kinerjanya
-  getBawahanKinerja: (month?: string, year?: string) => 
-    api.get<SubordinateUserResponse[]>('/kinerja-harian/bawahan', { params: { month, year } }),
+  getBawahanKinerja: (month?: string, year?: string, userId?: number) => 
+    api.get<SubordinateUserResponse[]>('/kinerja-harian/bawahan', { params: { month, year, user_id: userId } }),
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +39,7 @@ export const InputKinerja: React.FC = () => {
   } = useKinerjaStore();
   const navigate = useNavigate();
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm();
-  const [ikskOptions, setIkskOptions] = useState<{ id: number; indikator: string; target_vol?: string; target_satuan?: string }[]>([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
 
@@ -60,46 +60,47 @@ export const InputKinerja: React.FC = () => {
     return p.satker_ids && userSatkerId ? p.satker_ids.includes(Number(userSatkerId)) : false;
   });
 
-  const selectedSasaranKegiatanId = watch('sasaran_kegiatan_id');
-
-  // Dependent dropdown: IKSK berdasarkan sasaran kegiatan yang dipilih
-  useEffect(() => {
-    if (selectedSasaranKegiatanId) {
-      const sk = sasaranKegiatans.find((s) => String(s.id) === String(selectedSasaranKegiatanId));
-      const skIksks = sk?.iksks || [];
-      setIkskOptions(skIksks as any);
-    } else {
-      setIkskOptions([]);
-    }
-  }, [selectedSasaranKegiatanId, sasaranKegiatans]);
+  // Kumpulkan semua IKSK dari perkin yang ter-plot ke satker user (periode aktif)
+  const allIkskOptions = useMemo(() => {
+    return filteredPerkins.flatMap(p =>
+      (p.sasaran_kegiatans || []).flatMap(sk =>
+        (sk.iksks || []).map(iksk => ({
+          ...iksk,
+          sasaran_kegiatan_id: sk.id,
+          sasaran_kegiatan_nama: sk.nama_sasaran,
+          perkin_nama: p.nama_perkin,
+        }))
+      )
+    );
+  }, [filteredPerkins]);
 
   const selectedIkskId = watch('iksk_id');
 
-  // Auto-fill volume dan satuan dari IKSK yang dipilih
+  // Auto-fill SK, volume, dan satuan berdasarkan IKSK yang dipilih
   useEffect(() => {
-    if (selectedIkskId && ikskOptions.length > 0) {
-      const selectedIksk = ikskOptions.find((i) => String(i.id) === String(selectedIkskId));
-      if (selectedIksk && !editingId) {
-        setValue('volume', selectedIksk.target_vol || '');
-        setValue('satuan', selectedIksk.target_satuan || '');
+    if (selectedIkskId && allIkskOptions.length > 0) {
+      const selectedIksk = allIkskOptions.find((i) => String(i.id) === String(selectedIkskId));
+      if (selectedIksk) {
+        setValue('sasaran_kegiatan_id', selectedIksk.sasaran_kegiatan_id);
+        if (!editingId) {
+          setValue('volume', selectedIksk.target_vol || '');
+          setValue('satuan', selectedIksk.target_satuan || '');
+        }
       }
     }
-  }, [selectedIkskId, ikskOptions, setValue, editingId]);
+  }, [selectedIkskId, allIkskOptions, setValue, editingId]);
 
-  // Isi form saat edit
+  // Isi form saat edit — set IKSK duluan, SK akan auto-fill dari efek di atas
   useEffect(() => {
     if (editingId) {
       const record = records.find((r) => r.id === editingId);
       if (record) {
         setValue('tanggal', record.tanggal);
-        setValue('sasaran_kegiatan_id', record.sasaran_kegiatan_id || record.iksk?.id_sasaran_kegiatan);
         setValue('status_kehadiran', record.status_kehadiran);
         setValue('uraian_pekerjaan', record.uraian_pekerjaan);
-        setTimeout(() => {
-          setValue('iksk_id', record.id_iksk || record.iksk_id);
-          setValue('volume', record.volume || record.iksk?.target_vol);
-          setValue('satuan', record.satuan || record.iksk?.target_satuan);
-        }, 100);
+        setValue('iksk_id', record.id_iksk || record.iksk_id);
+        setValue('volume', record.volume || record.iksk?.target_vol);
+        setValue('satuan', record.satuan || record.iksk?.target_satuan);
       }
     }
   }, [editingId, records, setValue]);
@@ -217,28 +218,27 @@ export const InputKinerja: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sasaran_kegiatan_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Sasaran Kegiatan (SK)</Label>
-                <Select
-                  id="sasaran_kegiatan_id"
-                  placeholder="Klik untuk memilih Sasaran Kegiatan (SK)..."
-                  options={sasaranKegiatans.map((sk) => ({ label: sk.nama_sasaran || '', value: sk.id }))}
-                  className="h-14 rounded-2xl bg-slate-50 font-semibold shadow-sm"
-                  {...register('sasaran_kegiatan_id', { required: 'Sasaran Kegiatan wajib dipilih' })}
-                />
-                {errors.sasaran_kegiatan_id && <p className="text-[0.7rem] text-rose-500 font-bold mt-2 flex items-center gap-1.5 pl-1"><AlertCircle className="w-4 h-4" /> {errors.sasaran_kegiatan_id.message as string}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="iksk_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Indikator Kinerja (IKSK) dari SK Terpilih</Label>
+                <Label htmlFor="iksk_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Indikator Kinerja (IKSK)</Label>
                 <Select
                   id="iksk_id"
-                  placeholder={selectedSasaranKegiatanId ? 'Pilih Indikator Kinerja (IKSK) yang dilakukan...' : 'Silakan pilih Sasaran Kegiatan (SK) terlebih dahulu'}
-                  options={ikskOptions.map((i) => ({ label: i.indikator || (i as any).name || '', value: i.id }))}
-                  disabled={!selectedSasaranKegiatanId || ikskOptions.length === 0}
+                  placeholder="Pilih Indikator Kinerja (IKSK) yang dilakukan..."
+                  options={allIkskOptions.map((i) => ({ label: i.indikator || (i as any).name || '', value: i.id }))}
                   className="h-14 rounded-2xl bg-slate-50 font-semibold shadow-sm"
                   {...register('iksk_id', { required: 'Indikator Kinerja (IKSK) wajib dipilih' })}
                 />
                 {errors.iksk_id && <p className="text-[0.7rem] text-rose-500 font-bold mt-2 flex items-center gap-1.5 pl-1"><AlertCircle className="w-4 h-4" /> {errors.iksk_id.message as string}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sasaran_kegiatan_id" className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Sasaran Kegiatan (Auto)</Label>
+                <Select
+                  id="sasaran_kegiatan_id"
+                  placeholder="Otomatis terisi dari IKSK yang dipilih..."
+                  options={sasaranKegiatans.map((sk) => ({ label: sk.nama_sasaran || '', value: sk.id }))}
+                  disabled
+                  className="h-14 rounded-2xl bg-slate-100 font-semibold shadow-none text-slate-500 cursor-not-allowed"
+                  {...register('sasaran_kegiatan_id')}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

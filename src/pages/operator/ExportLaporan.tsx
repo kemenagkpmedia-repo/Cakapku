@@ -140,7 +140,7 @@ export const ExportLaporan: React.FC = () => {
   // Columns Configuration
   const [showColumns, setShowColumns] = useState({
     status: true,
-    perkin: true,
+    perkin: false,
     iksk: true,
     volume: true,
     uraian: true

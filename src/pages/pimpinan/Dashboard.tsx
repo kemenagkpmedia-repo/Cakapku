@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { BarChart3, CheckSquare, Users, Building, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
@@ -22,6 +23,7 @@ import { Pie } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { records, isLoading: isLoadingKinerja, fetchKinerja } = useKinerjaStore();
   const { users, fetchUsers } = useUserStore();
   const { satkers, fetchSatkers } = useSatkerStore();
@@ -49,54 +51,38 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Dynamic Attendance Stats dari data records
-  const attendanceStats = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayRecords = records.filter((r) => r.tanggal === today);
-
-    const userAttendanceMap = new Map<string, string>();
-    todayRecords.forEach((r) => {
-      const uName = r.userName || r.user?.nama || 'Anonymous';
-      const status = r.status_kehadiran || 'Hadir di Kantor';
-      if (!userAttendanceMap.has(uName)) userAttendanceMap.set(uName, status);
+  // Ambil log aktivitas terbaru dari seluruh bawahan
+  const recentSubordinateLogs = useMemo(() => {
+    const logs: any[] = [];
+    bawahanData.forEach((bawahan) => {
+      const userName = bawahan.nama || bawahan.user?.nama || 'Anonymous';
+      const userAvatar = userName.charAt(0).toUpperCase();
+      (bawahan.kinerja_harians || []).forEach((lh: any) => {
+        logs.push({
+          id: lh.id,
+          userName: userName,
+          userAvatar: userAvatar,
+          tanggal: lh.tanggal,
+          waktu: lh.created_at
+            ? new Date(lh.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+            : '',
+          timestamp: lh.created_at ? new Date(lh.created_at).getTime() : 0,
+          ikskName: lh.iksk?.indikator || lh.iksk_name || '-',
+          uraianPekerjaan: lh.uraian_pekerjaan,
+          statusKehadiran: lh.status_kehadiran || 'Hadir',
+        });
+      });
     });
 
-    const counts: Record<string, number> = {
-      'Hadir di Kantor': 0,
-      'Work From Home / Work From Anywhere': 0,
-      'Dinas Luar': 0,
-      'Cuti': 0,
-      'Lainnya': 0,
-    };
+    return logs
+      .sort((a, b) => b.timestamp - a.timestamp || new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
+      .slice(0, 10);
+  }, [bawahanData]);
 
-    userAttendanceMap.forEach((status) => {
-      if (status === 'Hadir di Kantor') counts['Hadir di Kantor']++;
-      else if (status.includes('Work From Home')) counts['Work From Home / Work From Anywhere']++;
-      else if (status === 'Dinas Luar') counts['Dinas Luar']++;
-      else if (status.includes('Cuti')) counts['Cuti']++;
-      else counts['Lainnya']++;
-    });
-
-    const total = Array.from(userAttendanceMap.values()).length || 1;
-
-    return {
-      labels: Object.keys(counts),
-      data: Object.values(counts).map((v) => Math.round((v / total) * 100)),
-      rawCounts: counts,
-      totalUsersReported: Array.from(userAttendanceMap.values()).length,
-    };
-  }, [records]);
-
-  const attendanceStatusData = {
-    labels: attendanceStats.labels,
-    datasets: [
-      {
-        data: attendanceStats.data,
-        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#94a3b8'],
-        borderWidth: 0,
-      },
-    ],
-  };
+  // Hitung total laporan dari seluruh bawahan
+  const totalLaporanBawahan = useMemo(() => {
+    return bawahanData.reduce((sum, b) => sum + (Number(b.total_kinerja) || 0), 0);
+  }, [bawahanData]);
 
   const isLoading = isLoadingKinerja || isLoadingBawahan;
 
@@ -108,7 +94,6 @@ export const Dashboard: React.FC = () => {
           <p className="text-sm text-text-muted mt-2 font-medium italic">Overview performa Satuan Kerja di lingkungan Kantor Kemenag Kulon Progo.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="flex-1 sm:flex-none rounded-xl border-border px-4 py-2.5 text-[0.65rem] font-bold uppercase tracking-widest bg-white/50 backdrop-blur-sm">Download PDF</Button>
           <Button onClick={loadBawahan} className="flex-1 sm:flex-none rounded-xl bg-accent hover:bg-accent-hover text-white px-4 py-2.5 text-[0.65rem] font-bold uppercase tracking-widest shadow-lg shadow-accent/20 border-accent border flex items-center gap-2">
             <RefreshCw className={`w-3.5 h-3.5 ${isLoadingBawahan ? 'animate-spin' : ''}`} /> Sync Data
           </Button>
@@ -116,12 +101,11 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[
-          { label: 'Total Aktivitas', value: records.length.toString(), trend: '↑ Today', sub: 'Input Kinerja', icon: BarChart3, color: 'text-accent' },
-          { label: 'Pegawai Bawahan', value: bawahanData.length.toString(), trend: 'Active', sub: 'Terpantau', icon: CheckSquare, color: 'text-success' },
-          { label: 'Pegawai Melapor', value: `${attendanceStats.totalUsersReported}/${users.length}`, trend: 'Hari Ini', sub: 'Kehadiran', icon: Users, color: 'text-amber-500' },
-          { label: 'Satker Terpantau', value: satkers.length.toString(), trend: 'Global', sub: 'Unit Kerja', icon: Building, color: 'text-slate-600' },
+          { label: 'Pegawai Bawahan', value: bawahanData.length.toString(), trend: 'Aktif', sub: 'Personil Terpantau', icon: Users, color: 'text-success' },
+          { label: 'Total Laporan Kinerja', value: totalLaporanBawahan.toString(), trend: 'Akumulasi', sub: 'Laporan Masuk', icon: BarChart3, color: 'text-accent' },
+          { label: 'Satker Terpantau', value: satkers.length.toString(), trend: 'Global', sub: 'Unit Kerja Terintegrasi', icon: Building, color: 'text-slate-600' },
         ].map((item, i) => (
           <motion.div
             key={i}
@@ -139,7 +123,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="flex items-baseline gap-2 mt-4 relative z-10">
               <span className="text-3xl font-extrabold text-text-header tracking-tight">{item.value}</span>
-              <span className={`text-[0.7rem] font-extrabold ${item.trend.includes('↑') || item.trend === 'Active' ? 'text-success' : 'text-accent'}`}>{item.trend}</span>
+              <span className="text-[0.7rem] font-extrabold text-success">{item.trend}</span>
             </div>
             <div className="text-[0.65rem] text-text-muted mt-2 font-medium opacity-60 italic">{item.sub}</div>
           </motion.div>
@@ -147,41 +131,12 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-12 gap-8">
-        {/* Attendance Chart */}
-        <Card className="col-span-12 lg:col-span-6 rounded-3xl border-border shadow-elegant overflow-hidden">
-          <CardHeader className="bg-surface border-b border-border/50 px-8 py-6">
-            <CardTitle className="text-base font-extrabold tracking-tight">Status Kehadiran Hari Ini</CardTitle>
-            <p className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest mt-1">Berdasarkan Laporan Kinerja Harian</p>
-          </CardHeader>
-          <CardContent className="p-8 flex flex-col sm:flex-row items-center justify-around gap-8">
-            <div className="w-[200px] h-[200px] relative">
-              <Pie data={attendanceStatusData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
-            </div>
-            <div className="flex-1 max-w-md w-full space-y-4">
-              {attendanceStats.labels.map((label, idx) => (
-                <div key={label} className="flex justify-between items-center group cursor-default">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full transition-transform duration-300 group-hover:scale-125" style={{ backgroundColor: attendanceStatusData.datasets[0].backgroundColor[idx] }} />
-                    <span className="text-[0.8125rem] font-bold text-text-main opacity-80 group-hover:opacity-100 truncate max-w-[180px]">{label}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-text-header">{attendanceStats.data[idx]}%</span>
-                    <div className="w-20 h-1 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full" style={{ width: `${attendanceStats.data[idx]}%`, backgroundColor: attendanceStatusData.datasets[0].backgroundColor[idx]?.toString() }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Data Bawahan */}
-        <Card className="col-span-12 lg:col-span-6 rounded-3xl border-border shadow-elegant overflow-hidden">
+        <Card className="col-span-12 rounded-3xl border-border shadow-elegant overflow-hidden">
           <CardHeader className="bg-surface border-b border-border/50 px-8 py-6 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base font-extrabold tracking-tight">Kinerja Bawahan</CardTitle>
-              <p className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest mt-1">Data dari API /dashboard/bawahan</p>
+              <p className="text-[0.65rem] text-text-muted font-bold uppercase tracking-widest mt-1">Daftar Kontribusi Laporan Kinerja Pegawai Bawahan</p>
             </div>
             {isLoadingBawahan && <Loader2 className="w-5 h-5 text-accent animate-spin" />}
           </CardHeader>
@@ -198,16 +153,16 @@ export const Dashboard: React.FC = () => {
                 <p className="text-sm text-text-muted font-medium italic">Belum ada data kinerja bawahan.</p>
               </div>
             ) : (
-              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-                {bawahanData.slice(0, 10).map((bawahan: any, i: number) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="flex gap-4 group">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[400px] overflow-y-auto pr-1">
+                {bawahanData.map((bawahan: any, i: number) => (
+                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="flex gap-4 p-4 rounded-2xl border border-slate-100 hover:border-accent/20 bg-slate-50/30 hover:bg-accent/[0.01] transition-all group">
                     <div className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-text-header font-black text-xs group-hover:bg-accent group-hover:text-white transition-all shadow-sm">
                       {(bawahan?.nama || bawahan?.user?.nama || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-extrabold text-text-header tracking-tight truncate">{bawahan?.nama || bawahan?.user?.nama || 'Pegawai'}</p>
-                      <p className="text-xs text-text-muted font-medium mt-0.5 truncate">{bawahan?.jabatan || bawahan?.user?.jabatan || ''}</p>
-                      <div className="mt-1 text-[0.65rem] font-black uppercase tracking-wider text-accent inline-block px-2 py-0.5 rounded-md bg-accent/5 border border-accent/10">
+                      <p className="text-xs text-text-muted font-medium mt-0.5 truncate">{bawahan?.jabatan || bawahan?.user?.jabatan || 'Pegawai'}</p>
+                      <div className="mt-2 text-[0.65rem] font-black uppercase tracking-wider text-accent inline-block px-2 py-0.5 rounded-md bg-accent/5 border border-accent/10">
                         {bawahan?.total_kinerja ?? '-'} Laporan
                       </div>
                     </div>
@@ -226,25 +181,30 @@ export const Dashboard: React.FC = () => {
             <CardTitle className="text-base font-extrabold text-text-header">Log Aktivitas Terbaru</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            {isLoadingKinerja ? (
+            {isLoadingBawahan ? (
               <div className="p-10 flex justify-center"><Loader2 className="w-6 h-6 text-accent animate-spin" /></div>
+            ) : recentSubordinateLogs.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
+                <Users className="w-8 h-8 text-slate-300" />
+                <p className="text-sm text-text-muted font-medium italic">Belum ada aktivitas terbaru dari bawahan.</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                {records.slice(0, 10).map((record, i) => (
-                  <div key={record.id} className="flex gap-4 group">
+                {recentSubordinateLogs.map((log) => (
+                  <div key={log.id} className="flex gap-4 group">
                     <div className="relative">
                       <div className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-text-header font-black text-xs group-hover:bg-accent group-hover:text-white transition-all shadow-sm">
-                        {(record.userName || record.user?.nama || 'U').charAt(0)}
+                        {log.userAvatar}
                       </div>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex justify-between items-start">
-                        <p className="text-sm font-extrabold text-text-header tracking-tight truncate">{record.userName || record.user?.nama || 'Anonymous'}</p>
-                        <span className="text-[0.65rem] font-bold text-text-muted mt-0.5">{record.waktu || record.tanggal}</span>
+                        <p className="text-sm font-extrabold text-text-header tracking-tight truncate">{log.userName}</p>
+                        <span className="text-[0.65rem] font-bold text-text-muted mt-0.5">{log.waktu || log.tanggal}</span>
                       </div>
-                      <p className="text-xs text-text-muted font-medium mt-1 truncate">{record.iksk_name || record.iksk?.indikator || '-'}</p>
+                      <p className="text-xs text-text-muted font-medium mt-1 truncate" title={log.uraianPekerjaan}>{log.uraianPekerjaan || log.ikskName}</p>
                       <div className="mt-2 text-[0.65rem] font-black uppercase tracking-wider text-accent inline-block px-2 py-0.5 rounded-md bg-accent/5 border border-accent/10 italic">
-                        {record.status_kehadiran || 'Hadir'}
+                        {log.statusKehadiran}
                       </div>
                     </div>
                   </div>
@@ -252,7 +212,7 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
             <div className="mt-10 flex justify-center">
-              <Button variant="outline" className="rounded-xl h-11 px-10 text-[0.65rem] font-black tracking-widest uppercase border-border">Lihat Seluruh Log Aktivitas</Button>
+              <Button variant="outline" onClick={() => navigate('/pimpinan/monitoring')} className="rounded-xl h-11 px-10 text-[0.65rem] font-black tracking-widest uppercase border-border">Lihat Seluruh Log Aktivitas</Button>
             </div>
           </CardContent>
         </Card>

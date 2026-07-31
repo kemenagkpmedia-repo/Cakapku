@@ -142,15 +142,7 @@ export const RiwayatKinerja: React.FC = () => {
               ),
               className: 'w-28'
             },
-            {
-              header: 'Perkin / Program',
-              accessor: (item: any) => (
-                <div className="text-xs font-medium text-accent leading-relaxed line-clamp-2" title={item.perkin_name || item.iksk?.perkin?.nama_perkin}>
-                  {item.perkin_name || item.iksk?.perkin?.nama_perkin || '-'}
-                </div>
-              ),
-              className: 'hidden md:table-cell w-1/5'
-            },
+
             {
               header: 'Uraian Pekerjaan',
               accessor: (item: any) => (
