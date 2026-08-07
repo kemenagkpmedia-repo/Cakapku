@@ -74,7 +74,7 @@ interface KinerjaState {
   }) => Promise<void>;
   deleteRecord: (id: number) => Promise<void>;
   setEditingId: (id: number | null) => void;
-  fetchBawahanKinerja: (month?: string, year?: string) => Promise<void>;
+  fetchBawahanKinerja: (month?: string, year?: string, userId?: number) => Promise<void>;
 }
 
 // ─── Helper: map raw API response to UI-friendly shape ───────────────────────
@@ -139,20 +139,39 @@ export const useKinerjaStore = create<KinerjaState>()((set) => ({
 
   setEditingId: (id) => set({ editingId: id }),
 
-  fetchBawahanKinerja: async (month, year) => {
+  fetchBawahanKinerja: async (month, year, userId) => {
     set({ isLoading: true, error: null });
     try {
-      const res = await kinerjaService.getBawahanKinerja(month, year);
+      const res = await kinerjaService.getBawahanKinerja(month, year, userId);
       const raw = (res.data as any)?.data || res.data || [];
-      // raw is a list of users, each has kinerja_harians
-      const usersWithMappedRecords = raw.map((u: any) => ({
-        ...u,
-        totalReports: u.kinerja_harians?.length || 0,
-        records: (u.kinerja_harians || []).map(mapRecord).sort((a: any, b: any) => 
-          new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        )
-      }));
-      set({ bawahanUsers: usersWithMappedRecords, isLoading: false });
+      
+      if (userId) {
+        const userObj = raw.find((u: any) => u.id === userId) || raw[0];
+        if (userObj) {
+          const mappedUser = {
+            ...userObj,
+            totalReports: userObj.kinerja_harians?.length || 0,
+            records: (userObj.kinerja_harians || []).map(mapRecord).sort((a: any, b: any) => 
+              new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+            )
+          };
+          set((state) => ({
+            bawahanUsers: state.bawahanUsers.map(u => u.id === userId ? { ...u, ...mappedUser } : u),
+            isLoading: false
+          }));
+        } else {
+          set({ isLoading: false });
+        }
+      } else {
+        const usersWithMappedRecords = raw.map((u: any) => ({
+          ...u,
+          totalReports: u.kinerja_harians?.length || 0,
+          records: (u.kinerja_harians || []).map(mapRecord).sort((a: any, b: any) => 
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+          )
+        }));
+        set({ bawahanUsers: usersWithMappedRecords, isLoading: false });
+      }
     } catch (err: any) {
       set({ error: err.response?.data?.message || err.message, isLoading: false });
     }

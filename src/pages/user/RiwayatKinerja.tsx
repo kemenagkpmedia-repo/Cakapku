@@ -72,58 +72,58 @@ export const RiwayatKinerja: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-12 space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 px-2">
+    <div className="w-full pb-12 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="text-center sm:text-left">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-text-header tracking-tight">Riwayat Kinerja</h1>
-          <p className="text-sm text-text-muted mt-2 font-medium">Daftar lengkap aktivitas kerja yang telah Anda laporkan.</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-text-header tracking-tight">Riwayat Kinerja</h1>
+          <p className="text-xs sm:text-sm text-text-muted mt-1">Daftar lengkap aktivitas kerja yang telah Anda laporkan.</p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex justify-center sm:justify-end gap-3">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} className="flex justify-center sm:justify-end gap-2.5">
           <Button
             variant="outline"
             onClick={() => fetchKinerja(filterMonth, filterYear)}
-            className="rounded-xl h-12 px-4 font-bold border-border"
+            className="rounded-xl h-11 px-4 font-medium border-border"
             title="Refresh"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
           <Button
             onClick={() => { setEditingId(null); navigate('/user/kinerja'); }}
-            className="w-full sm:w-auto rounded-xl h-12 px-6 font-bold uppercase tracking-widest text-[0.7rem] shadow-lg shadow-accent/20 hover:shadow-xl transition-all"
+            className="w-full sm:w-auto rounded-xl h-11 px-5 font-semibold text-xs tracking-wide shadow-lg shadow-accent/10 hover:shadow-xl transition-all"
           >
-            <Plus className="w-4 h-4 mr-2" /> Tambah Kinerja
+            <Plus className="w-4.5 h-4.5 mr-1.5" /> Tambah Kinerja
           </Button>
         </motion.div>
       </div>
 
       {error && (
-        <div className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+        <div className="bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
           <button onClick={() => fetchKinerja(filterMonth, filterYear)} className="ml-auto"><RefreshCw className="w-4 h-4" /></button>
         </div>
       )}
 
       {/* Month & Year Filter Toolbar */}
-      <div className="bg-white p-5 border border-border rounded-3xl shadow-sm flex flex-col sm:flex-row items-center gap-4">
-        <div className="flex-1 w-full space-y-1.5">
-          <label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Filter Bulan Laporan</label>
+      <div className="bg-white p-4 sm:p-5 border border-border rounded-2xl shadow-sm flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex-1 w-full space-y-1">
+          <label className="text-xs font-medium text-text-muted">Filter Bulan Laporan</label>
           <select
             value={filterMonth}
             onChange={(e) => setFilterMonth(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-semibold focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-medium focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
           >
             {months.map(m => (
               <option key={m.value} value={m.value}>{m.label}</option>
             ))}
           </select>
         </div>
-        <div className="flex-1 w-full space-y-1.5">
-          <label className="text-[0.65rem] font-bold text-text-muted uppercase tracking-widest">Filter Tahun Laporan</label>
+        <div className="flex-1 w-full space-y-1">
+          <label className="text-xs font-medium text-text-muted">Filter Tahun Laporan</label>
           <select
             value={filterYear}
             onChange={(e) => setFilterYear(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-semibold focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-header font-medium focus:outline-none focus:ring-2 focus:ring-accent/10 focus:border-accent transition-all text-sm"
           >
             {years.map(y => (
               <option key={y} value={y}>{y}</option>
@@ -138,46 +138,34 @@ export const RiwayatKinerja: React.FC = () => {
             {
               header: 'Tanggal',
               accessor: (item: any) => (
-                <div className="flex flex-col">
-                  <span className="text-[0.75rem] font-black text-text-header uppercase tracking-widest">{item.tanggal}</span>
-                  {item.waktu && (
-                    <span className="text-[0.6rem] font-bold text-text-muted flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {item.waktu}
-                    </span>
-                  )}
+                <span className="text-xs text-text-muted font-medium whitespace-nowrap">{item.tanggal}</span>
+              ),
+              className: 'w-28'
+            },
+
+            {
+              header: 'Uraian Pekerjaan',
+              accessor: (item: any) => (
+                <div className="text-sm font-medium text-text-header leading-relaxed break-words">
+                  {item.uraian_pekerjaan}
                 </div>
               ),
-              className: 'w-32'
+              className: 'min-w-[180px]'
             },
             {
-              header: 'Pekerjaan',
+              header: 'Indikator (IKSK)',
               accessor: (item: any) => (
-                <div className="space-y-1">
-                  <div className="font-extrabold text-text-header text-[0.9rem] tracking-tight leading-snug line-clamp-2">
-                    {item.uraian_pekerjaan}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-                    <p className="text-[0.65rem] text-accent font-bold uppercase tracking-widest truncate">
-                      {item.perkin_name || item.iksk?.perkin?.nama_perkin || 'Perkin'}
-                    </p>
-                  </div>
+                <div className="text-xs text-text-muted leading-relaxed line-clamp-2" title={item.iksk_name || item.iksk?.indikator}>
+                  {item.iksk_name || item.iksk?.indikator || '-'}
                 </div>
-              )
-            },
-            {
-              header: 'Indikator',
-              accessor: (item: any) => (
-                <p className="text-[0.7rem] text-text-muted font-medium line-clamp-2 max-w-[200px]">
-                  {item.iksk_name || item.iksk?.indikator || ''}
-                </p>
-              )
+              ),
+              className: 'hidden lg:table-cell w-1/4'
             },
             {
               header: 'Kehadiran',
               accessor: (item: any) => (
                 <span className={cn(
-                  "text-[0.6rem] font-black uppercase tracking-widest px-2 py-1 rounded-md border inline-block whitespace-nowrap",
+                  "text-[0.7rem] font-medium px-2.5 py-0.5 rounded-full border inline-block whitespace-nowrap",
                   item.status_kehadiran?.includes('Hadir') 
                     ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
                     : "bg-amber-50 text-amber-600 border-amber-100"
@@ -185,7 +173,7 @@ export const RiwayatKinerja: React.FC = () => {
                   {item.status_kehadiran}
                 </span>
               ),
-              className: 'w-32 text-center'
+              className: 'w-28 text-center hidden sm:table-cell'
             }
           ]}
           data={records}
@@ -213,13 +201,13 @@ export const RiwayatKinerja: React.FC = () => {
           )}
         />
 
-        <div className="p-8 bg-surface border border-border rounded-3xl flex items-start gap-4 shadow-sm">
-          <div className="w-10 h-10 rounded-full bg-accent/5 flex items-center justify-center text-accent shrink-0 border border-accent/10">
-            <FileText className="w-5 h-5" />
+        <div className="p-6 bg-surface border border-border rounded-2xl flex items-start gap-4 shadow-sm">
+          <div className="w-9 h-9 rounded-full bg-accent/5 flex items-center justify-center text-accent shrink-0 border border-accent/10">
+            <FileText className="w-4.5 h-4.5" />
           </div>
           <div>
-            <p className="text-sm font-extrabold text-text-header tracking-tight">Informasi Pelaporan</p>
-            <p className="text-[0.75rem] text-text-muted mt-2 font-medium leading-relaxed">
+            <p className="text-sm font-semibold text-text-header tracking-tight">Informasi Pelaporan</p>
+            <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
               Setiap laporan kinerja yang Anda kirimkan bersifat permanen namun dapat diubah selama belum divalidasi oleh Atasan Langsung. Pastikan data yang dimasukkan sesuai dengan output pekerjaan yang dihasilkan.
             </p>
           </div>
@@ -234,15 +222,15 @@ export const RiwayatKinerja: React.FC = () => {
         description="Apakah Anda yakin ingin menghapus data kinerja ini? Tindakan ini tidak dapat dibatalkan."
         footer={
           <>
-            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} className="rounded-xl px-6 font-bold uppercase tracking-widest text-[0.7rem]">Batal</Button>
-            <Button onClick={executeDelete} disabled={isDeleting} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-6 font-bold uppercase tracking-widest text-[0.7rem]">
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)} className="rounded-xl px-5 font-semibold text-xs tracking-wide">Batal</Button>
+            <Button onClick={executeDelete} disabled={isDeleting} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-5 font-semibold text-xs tracking-wide">
               {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Hapus Sekarang'}
             </Button>
           </>
         }
       >
-        <div className="flex items-center justify-center p-4 bg-rose-50 rounded-2xl border border-rose-100 mb-2">
-          <AlertTriangle className="w-12 h-12 text-rose-500" />
+        <div className="flex items-center justify-center p-4 bg-rose-50 rounded-xl border border-rose-100 mb-2">
+          <AlertTriangle className="w-10 h-10 text-rose-500" />
         </div>
       </Modal>
     </div>

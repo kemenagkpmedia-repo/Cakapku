@@ -1,12 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { usePerkinStore } from '../../store/perkinStore';
-import { FileSpreadsheet, Upload, Download, Trash2, CheckCircle, AlertCircle, Info, Calendar, RefreshCw, X } from 'lucide-react';
+import { FileSpreadsheet, Upload, Download, Trash2, CheckCircle, AlertCircle, Info, Calendar, RefreshCw, X, ChevronDown } from 'lucide-react';
 import { Select } from '../../components/ui/Select';
 import { Input } from '../../components/ui/Input';
 import * as XLSX from 'xlsx';
+import { cn } from '../../utils/cn';
 
 
 export const ManajemenPerkin: React.FC = () => {
@@ -20,11 +22,24 @@ export const ManajemenPerkin: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [namaPerkin, setNamaPerkin] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [expandedPerkinIds, setExpandedPerkinIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetchPeriodes();
     fetchPerkins();
   }, [fetchPeriodes, fetchPerkins]);
+
+  // Default collapse: closed (empty array, tidak terbuka semua)
+  // Biarkan useEffect di bawah kosong agar defaultnya close.
+
+  const toggleExpandPerkin = (id: number) => {
+    setExpandedPerkinIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const expandAll = () => setExpandedPerkinIds(perkins.map(p => p.id));
+  const collapseAll = () => setExpandedPerkinIds([]);
 
   const activePeriods = periods.filter((p) => p.isActive ?? Boolean(p.status));
 
@@ -246,35 +261,58 @@ export const ManajemenPerkin: React.FC = () => {
             <p className="text-xs font-bold text-text-muted uppercase tracking-[0.15em]">
               Menampilkan <span className="text-text-header font-extrabold">{perkins.length}</span> Sasaran Kegiatan
             </p>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={expandAll}
+                className="text-[0.65rem] font-bold uppercase tracking-wider h-8 px-3 rounded-lg text-accent hover:bg-accent/5"
+              >
+                Expand All
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={collapseAll}
+                className="text-[0.65rem] font-bold uppercase tracking-wider h-8 px-3 rounded-lg text-text-muted hover:bg-slate-100"
+              >
+                Collapse All
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-6">
-            {perkins.map((perkin, i) => (
-              <motion.div key={perkin.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <Card className="rounded-3xl border-border shadow-elegant overflow-hidden group">
-                  <CardHeader className="bg-slate-50 border-b border-border/60 px-8 py-5 group-hover:bg-white transition-colors duration-300">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-extrabold text-accent flex items-center gap-2 tracking-tight">
-                        <div className="w-1.5 h-6 bg-accent rounded-full opacity-50" />
-                        {perkin.nama_perkin || perkin.name}
-                      </CardTitle>
-                      <div className="flex items-center gap-3">
-                        <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-lg">
-                          <span className="text-[0.6rem] font-black text-accent uppercase tracking-widest">
-                            {periods.find((p) => p.id === (perkin.id_periode ?? perkin.period_id))?.tahun || 'Tanpa Periode'}
-                          </span>
+            {perkins.map((perkin, i) => {
+              const isExpanded = expandedPerkinIds.includes(perkin.id);
+              return (
+                <motion.div key={perkin.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <Card className="rounded-3xl border-border shadow-elegant overflow-hidden group">
+                    <CardHeader 
+                      onClick={() => toggleExpandPerkin(perkin.id)}
+                      className="bg-slate-50 border-b border-border/60 px-8 py-5 group-hover:bg-white transition-colors duration-300 cursor-pointer flex select-none"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <CardTitle className="text-sm font-extrabold text-accent flex items-center gap-2 tracking-tight">
+                          <ChevronDown className={cn("w-4 h-4 text-text-muted transition-transform duration-300", isExpanded ? "transform rotate-0" : "transform -rotate-90")} />
+                          <div className="w-1.5 h-6 bg-accent rounded-full opacity-50" />
+                          {perkin.nama_perkin || perkin.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                          <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-lg">
+                            <span className="text-[0.6rem] font-black text-accent uppercase tracking-widest">
+                              {periods.find((p) => p.id === (perkin.id_periode ?? perkin.period_id))?.tahun || 'Tanpa Periode'}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleDelete(perkin.id)}
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border border-transparent hover:border-rose-100"
+                            title="Hapus Perkin"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleDelete(perkin.id)}
-                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors border border-transparent hover:border-rose-100"
-                          title="Hapus Perkin"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
+                    </CardHeader>
+                    {isExpanded && (
+                      <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <table className="w-full text-[0.875rem]">
                         <thead>
@@ -328,9 +366,11 @@ export const ManajemenPerkin: React.FC = () => {
                       </table>
                     </div>
                   </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    )}
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
 
           <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-6 flex items-start gap-4 shadow-sm">
@@ -348,141 +388,144 @@ export const ManajemenPerkin: React.FC = () => {
       )}
 
       {/* Import Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-16 bg-black/40 backdrop-blur-sm overflow-y-auto">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl border border-border overflow-hidden text-left"
-            >
-              {/* Header */}
-              <div className="px-8 py-6 bg-slate-50 border-b border-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-extrabold text-text-header tracking-tight">Import Data Perkin</h3>
-                  <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-1">Unggah file Excel Perkin & IKSK</p>
-                </div>
-                <button onClick={closeModal} className="p-2 rounded-xl hover:bg-white transition-colors">
-                  <X className="w-5 h-5 text-text-muted" />
-                </button>
-              </div>
-
-              {/* Content */}
-              <div className="p-8 space-y-6">
-                {/* Drag and Drop Zone */}
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${isDragOver
-                      ? 'border-accent bg-accent/5 scale-[0.98]'
-                      : selectedFile
-                        ? 'border-emerald-300 bg-emerald-50/20'
-                        : 'border-border hover:border-accent hover:bg-slate-50'
-                    }`}
-                >
-                  {selectedFile ? (
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center border border-emerald-200">
-                        <FileSpreadsheet className="w-8 h-8 text-emerald-600" />
-                      </div>
-                      <span className="text-sm font-bold text-text-header max-w-xs truncate">{selectedFile.name}</span>
-                      <span className="text-xs font-semibold text-text-muted">
-                        {(selectedFile.size / 1024).toFixed(2)} KB
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedFile(null);
-                          if (fileInputRef.current) fileInputRef.current.value = '';
-                        }}
-                        className="text-xs font-bold text-rose-500 hover:text-rose-700 underline mt-1"
-                      >
-                        Ganti File
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center text-center space-y-3">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center border border-border hover:scale-110 transition-all">
-                        <Upload className="w-8 h-8 text-slate-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-text-header">Drag & drop file Anda di sini, atau <span className="text-accent underline">Pilih File</span></p>
-                        <p className="text-xs font-medium text-text-muted mt-1">Mendukung format .xlsx, .xls</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Form Fields */}
-                <div className="space-y-4">
-                  {/* Period selection */}
-                  <div className="space-y-1.5">
-                    <label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Pilih Periode Aktif</label>
-                    <Select
-                      placeholder="Pilih Periode..."
-                      className="h-11 rounded-xl bg-white border-border shadow-sm text-[0.75rem] font-bold"
-                      value={selectedPeriodId}
-                      onChange={(e) => setSelectedPeriodId(e.target.value)}
-                      options={activePeriods.map((p) => ({ label: p.tahun || p.name || String(p.id), value: String(p.id) }))}
-                    />
+      {ReactDOM.createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-16 bg-black/40 backdrop-blur-sm overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl border border-border overflow-hidden text-left"
+              >
+                {/* Header */}
+                <div className="px-8 py-6 bg-slate-50 border-b border-border flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-extrabold text-text-header tracking-tight">Import Data Perkin</h3>
+                    <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-1">Unggah file Excel Perkin & IKSK</p>
                   </div>
-
-                  {/* Perkin Name Input */}
-                  <div className="space-y-1.5">
-                    <label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Nama Perkin</label>
-                    <Input
-                      placeholder="Masukkan nama perkin satuan kerja (contoh: Perjanjian Kinerja Kantor Kemenag Kulon Progo)"
-                      className="rounded-xl border-border bg-white h-11 px-4 font-semibold text-sm"
-                      value={namaPerkin}
-                      onChange={(e) => setNamaPerkin(e.target.value)}
-                    />
-                  </div>
+                  <button onClick={closeModal} className="p-2 rounded-xl hover:bg-white transition-colors">
+                    <X className="w-5 h-5 text-text-muted" />
+                  </button>
                 </div>
 
-                <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex items-start gap-3">
-                  <Info className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                  <p className="text-[0.75rem] text-text-muted font-medium leading-relaxed">
-                    Pastikan data format kolom pada file excel sesuai dengan template perkin. Data IKSK akan secara otomatis dipetakan ke Sasaran Kegiatan yang sesuai.
-                  </p>
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem]"
-                    onClick={closeModal}
-                    disabled={isImporting}
+                {/* Content */}
+                <div className="p-8 space-y-6">
+                  {/* Drag and Drop Zone */}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${isDragOver
+                        ? 'border-accent bg-accent/5 scale-[0.98]'
+                        : selectedFile
+                          ? 'border-emerald-300 bg-emerald-50/20'
+                          : 'border-border hover:border-accent hover:bg-slate-50'
+                      }`}
                   >
-                    Batal
-                  </Button>
-                  <Button
-                    className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem] shadow-lg shadow-accent/20 flex gap-2 justify-center items-center"
-                    onClick={submitImport}
-                    disabled={isImporting || !selectedFile || !selectedPeriodId || !namaPerkin.trim()}
-                  >
-                    {isImporting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Mengimpor...
-                      </>
+                    {selectedFile ? (
+                      <div className="flex flex-col items-center text-center space-y-2">
+                        <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center border border-emerald-200">
+                          <FileSpreadsheet className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <span className="text-sm font-bold text-text-header max-w-xs truncate">{selectedFile.name}</span>
+                        <span className="text-xs font-semibold text-text-muted">
+                          {(selectedFile.size / 1024).toFixed(2)} KB
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFile(null);
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          className="text-xs font-bold text-rose-500 hover:text-rose-700 underline mt-1"
+                        >
+                          Ganti File
+                        </button>
+                      </div>
                     ) : (
-                      <>
-                        <Upload className="w-4 h-4" />
-                        Import Data
-                      </>
+                      <div className="flex flex-col items-center text-center space-y-3">
+                        <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center border border-border hover:scale-110 transition-all">
+                          <Upload className="w-8 h-8 text-slate-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-text-header">Drag & drop file Anda di sini, atau <span className="text-accent underline">Pilih File</span></p>
+                          <p className="text-xs font-medium text-text-muted mt-1">Mendukung format .xlsx, .xls</p>
+                        </div>
+                      </div>
                     )}
-                  </Button>
+                  </div>
+
+                  {/* Form Fields */}
+                  <div className="space-y-4">
+                    {/* Period selection */}
+                    <div className="space-y-1.5">
+                      <label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Pilih Periode Aktif</label>
+                      <Select
+                        placeholder="Pilih Periode..."
+                        className="h-11 rounded-xl bg-white border-border shadow-sm text-[0.75rem] font-bold"
+                        value={selectedPeriodId}
+                        onChange={(e) => setSelectedPeriodId(e.target.value)}
+                        options={activePeriods.map((p) => ({ label: p.tahun || p.name || String(p.id), value: String(p.id) }))}
+                      />
+                    </div>
+
+                    {/* Perkin Name Input */}
+                    <div className="space-y-1.5">
+                      <label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest pl-1">Nama Perkin</label>
+                      <Input
+                        placeholder="Masukkan nama perkin satuan kerja (contoh: Perjanjian Kinerja Kantor Kemenag Kulon Progo)"
+                        className="rounded-xl border-border bg-white h-11 px-4 font-semibold text-sm"
+                        value={namaPerkin}
+                        onChange={(e) => setNamaPerkin(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex items-start gap-3">
+                    <Info className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                    <p className="text-[0.75rem] text-text-muted font-medium leading-relaxed">
+                      Pastikan data format kolom pada file excel sesuai dengan template perkin. Data IKSK akan secara otomatis dipetakan ke Sasaran Kegiatan yang sesuai.
+                    </p>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem]"
+                      onClick={closeModal}
+                      disabled={isImporting}
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      className="flex-1 rounded-2xl h-12 font-bold uppercase tracking-widest text-[0.75rem] shadow-lg shadow-accent/20 flex gap-2 justify-center items-center"
+                      onClick={submitImport}
+                      disabled={isImporting || !selectedFile || !selectedPeriodId || !namaPerkin.trim()}
+                    >
+                      {isImporting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Mengimpor...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          Import Data
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

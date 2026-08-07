@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
@@ -7,39 +7,145 @@ import { Input } from '../../components/ui/Input';
 import { Label } from '../../components/ui/Label';
 import { Select } from '../../components/ui/Select';
 import { useAuthStore, User } from '../../store/authStore';
+import { useUserStore } from '../../store/userStore';
 import { useSatkerStore } from '../../store/satkerStore';
-import { User as UserIcon, Mail, Contact, Briefcase, MapPin, Phone, Save, CheckCircle } from 'lucide-react';
+import { User as UserIcon, Mail, Contact, Briefcase, Phone, Save, CheckCircle, Loader2, Camera } from 'lucide-react';
+import api from '../../api/axios';
 
 export const Biodata: React.FC = () => {
-  const { user, updateUser } = useAuthStore();
-  const { satkers } = useSatkerStore();
+  const { user, token, config, login, updateUser } = useAuthStore();
+  const { updateUser: updateUserApi } = useUserStore();
+  const { satkers, fetchSatkers } = useSatkerStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setSubmitError(null);
+
+    const formData = new FormData();
+    formData.append('foto', file);
+
+    try {
+      const res = await api.post('/me/foto', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data?.foto_url) {
+        updateUser({
+          foto: res.data.foto,
+          foto_url: res.data.foto_url,
+        });
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+      }
+    } catch (err: any) {
+      setSubmitError(
+        err?.response?.data?.message || 'Gagal mengunggah foto profil.'
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // ─── Fetch data segar dari DB saat komponen mount ────────────────────────────
+  useEffect(() => {
+    fetchSatkers();
+    const fetchFresh = async () => {
+      setIsFetching(true);
+      try {
+        const res = await api.get('/me');
+        const freshUser = res.data?.user || res.data;
+        const freshConfig = res.data?.config || config;
+
+        if (freshUser && token && freshConfig) {
+          // Normalisasi: petakan gol_ruang → golongan agar konsisten di frontend
+          const normalized = {
+            ...freshUser,
+            golongan: freshUser.golongan ?? freshUser.gol_ruang,
+          };
+          login(normalized, token, freshConfig);
+        }
+      } catch (err) {
+        // Gagal fetch tidak apa-apa, gunakan data yang ada di store
+        console.warn('[Biodata] Gagal refresh dari /me, menggunakan data lokal.');
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    fetchFresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!user) return null;
 
-  const { register, handleSubmit, formState: { errors } } = useForm<Partial<User>>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<Partial<User>>({
     defaultValues: {
-      name: user?.name || '',
+      name: user?.name || user?.nama || '',
       email: user?.email || '',
       nip: user?.nip || '',
       jabatan: user?.jabatan || '',
-      pangkat: user?.pangkat || '',
       golongan: user?.golongan || '',
-      phone: user?.phone || '',
-      address: user?.address || '',
-      satker_id: user?.satker_id,
+      satker_id: user?.satker_id ?? user?.id_satker,
     }
   });
 
-  const onSubmit = (data: Partial<User>) => {
-    updateUser(data);
-    setIsEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+  // Reset form ketika data user berubah (setelah fetch segar selesai)
+  useEffect(() => {
+    if (!isFetching) {
+      reset({
+        name: user?.name || user?.nama || '',
+        email: user?.email || '',
+        nip: user?.nip || '',
+        jabatan: user?.jabatan || '',
+        golongan: user?.golongan || '',
+        satker_id: user?.satker_id ?? user?.id_satker,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFetching]);
+
+  const onSubmit = async (data: Partial<User>) => {
+    if (!user?.id) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Kirim ke backend: petakan golongan → gol_ruang sesuai nama kolom DB
+      const payload = {
+        ...data,
+        nama: data.name,
+        gol_ruang: data.golongan,
+      };
+
+      await updateUserApi(user.id, payload);
+
+      // Sinkronkan hasil ke authStore agar tampilan langsung update
+      updateUser({ ...data });
+
+      setIsEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err: any) {
+      setSubmitError(
+        err?.response?.data?.message || 'Gagal menyimpan data. Silakan coba lagi.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const satkerName = satkers.find(s => s.id === user?.satker_id)?.name || 'Tidak Diketahui';
+  const satkerName = satkers.find(s => s.id === (user?.satker_id ?? user?.id_satker))?.nama_satker || satkers.find(s => s.id === (user?.satker_id ?? user?.id_satker))?.name || 'Tidak Diketahui';
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -59,6 +165,14 @@ export const Biodata: React.FC = () => {
         )}
       </div>
 
+      {/* Loading data segar dari server */}
+      {isFetching && (
+        <div className="flex items-center gap-2 text-xs text-text-muted font-semibold">
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          Memuat data terbaru...
+        </div>
+      )}
+
       {showSuccess && (
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -72,18 +186,47 @@ export const Biodata: React.FC = () => {
         </motion.div>
       )}
 
+      {submitError && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="bg-rose-50 border border-rose-100 text-rose-700 p-4 rounded-2xl text-sm font-semibold shadow-sm"
+        >
+          {submitError}
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-12 gap-8 items-start">
         {/* Profile Summary */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <Card className="rounded-3xl border-border shadow-elegant overflow-hidden group">
             <CardContent className="pt-10 pb-8 flex flex-col items-center text-center px-6">
-              <div className="relative mb-6">
-                <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white text-4xl font-extrabold shadow-2xl shadow-accent/30 border-4 border-white transform transition-transform duration-500 group-hover:rotate-3 group-hover:scale-105">
-                  {(user?.name || user?.nama || '?').charAt(0).toUpperCase()}
+              <div className="relative mb-6 group/avatar">
+                <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white text-4xl font-extrabold shadow-2xl shadow-accent/30 border-4 border-white transform transition-transform duration-500 group-hover:scale-105 overflow-hidden">
+                  {isUploading ? (
+                    <Loader2 className="w-10 h-10 animate-spin text-white" />
+                  ) : user?.foto_url ? (
+                    <img src={user.foto_url} alt={user?.name || user?.nama} className="w-full h-full object-cover" />
+                  ) : (
+                    (user?.name || user?.nama || '?').charAt(0).toUpperCase()
+                  )}
                 </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-border shadow-lg flex items-center justify-center">
-                  <UserIcon className="w-5 h-5 text-accent" />
-                </div>
+                
+                {/* Camera upload overlay */}
+                <label 
+                  htmlFor="avatar-input" 
+                  className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border border-border shadow-lg flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors group-hover/avatar:scale-110 duration-300"
+                >
+                  <Camera className="w-5 h-5 text-accent" />
+                  <input
+                    type="file"
+                    id="avatar-input"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
               </div>
               <h2 className="text-xl font-extrabold text-text-header tracking-tight">{user?.name || user?.nama || 'Pengguna'}</h2>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/5 text-accent text-[0.65rem] font-bold uppercase tracking-widest mt-2 border border-accent/10">
@@ -118,7 +261,7 @@ export const Biodata: React.FC = () => {
           <CardHeader className="border-b border-border px-8 py-6 bg-surface">
             <CardTitle className="text-base font-extrabold flex items-center gap-2.5">
               <Contact className="w-5 h-5 text-accent" />
-              Informasi Kepegawaian & Kontak
+              Informasi Kepegawaian &amp; Kontak
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8">
@@ -146,32 +289,33 @@ export const Biodata: React.FC = () => {
                       {user?.jabatan || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
                     </p>
                   )}
-                </div>
-
-                {/* Pangkat */}
-                <div className="space-y-2">
-                  <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Pangkat</Label>
-                  {isEditing ? (
-                    <Input {...register('pangkat')} className="h-12 rounded-xl bg-slate-50 border-border focus:bg-white focus:ring-accent/20 transition-all font-semibold" placeholder="Contoh: Penata" />
-                  ) : (
-                    <p className="text-[0.9375rem] font-bold text-text-header py-3 px-4 bg-slate-50 border border-slate-100 rounded-xl">
-                      {user?.pangkat || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
-                    </p>
-                  )}
-                </div>
-
-                {/* Golongan */}
+                </div>                {/* Golongan */}
                 <div className="space-y-2">
                   <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Golongan</Label>
                   {isEditing ? (
                     <Select 
                       options={[
-                        { label: 'III/a', value: 'III/a' },
-                        { label: 'III/b', value: 'III/b' },
-                        { label: 'III/c', value: 'III/c' },
-                        { label: 'III/d', value: 'III/d' },
-                        { label: 'IV/a', value: 'IV/a' },
-                        { label: 'IV/b', value: 'IV/b' },
+                        { label: '-- Pilih Golongan --', value: '' },
+                        { label: '── PNS Golongan II ──', value: '', disabled: true },
+                        { label: 'II/a - Pengatur Muda', value: 'II/a' },
+                        { label: 'II/b - Pengatur Muda Tk.I', value: 'II/b' },
+                        { label: 'II/c - Pengatur', value: 'II/c' },
+                        { label: 'II/d - Pengatur Tk.I', value: 'II/d' },
+                        { label: '── PNS Golongan III ──', value: '', disabled: true },
+                        { label: 'III/a - Penata Muda', value: 'III/a' },
+                        { label: 'III/b - Penata Muda Tk.I', value: 'III/b' },
+                        { label: 'III/c - Penata', value: 'III/c' },
+                        { label: 'III/d - Penata Tk.I', value: 'III/d' },
+                        { label: '── PNS Golongan IV ──', value: '', disabled: true },
+                        { label: 'IV/a - Pembina', value: 'IV/a' },
+                        { label: 'IV/b - Pembina Tk.I', value: 'IV/b' },
+                        { label: 'IV/c - Pembina Utama Muda', value: 'IV/c' },
+                        { label: 'IV/d - Pembina Utama Madya', value: 'IV/d' },
+                        { label: '── PPPK ──', value: '', disabled: true },
+                        { label: 'PPPK III', value: 'PPPK III' },
+                        { label: 'PPPK V', value: 'PPPK V' },
+                        { label: 'PPPK VII', value: 'PPPK VII' },
+                        { label: 'PPPK IX', value: 'PPPK IX' },
                       ]}
                       {...register('golongan')}
                       className="h-12 rounded-xl font-semibold"
@@ -183,19 +327,7 @@ export const Biodata: React.FC = () => {
                   )}
                 </div>
 
-                {/* Phone */}
-                <div className="space-y-2">
-                  <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">No. Telepon Aktif</Label>
-                  {isEditing ? (
-                    <Input {...register('phone')} className="h-12 rounded-xl bg-slate-50 border-border focus:bg-white focus:ring-accent/20 transition-all font-semibold" placeholder="0812..." />
-                  ) : (
-                    <p className="text-[0.9375rem] font-bold text-text-header py-3 px-4 bg-slate-50 border border-slate-100 rounded-xl">
-                      {user?.phone || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
-                    </p>
-                  )}
-                </div>
-
-                {/* Satker (Read Only) */}
+                {/* Satuan Kerja (Read Only) */}
                 <div className="space-y-2">
                   <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Satuan Kerja</Label>
                   <p className="text-[0.9375rem] font-semibold text-text-muted py-3 px-4 bg-slate-100 border border-border rounded-xl italic">
@@ -203,39 +335,33 @@ export const Biodata: React.FC = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Address */}
-              <div className="space-y-2">
-                <Label className="text-[0.7rem] font-bold text-text-muted uppercase tracking-widest">Alamat Lengkap Domisili</Label>
-                {isEditing ? (
-                  <textarea
-                    {...register('address')}
-                    className="w-full px-4 py-3 border border-border rounded-xl text-[0.875rem] font-semibold bg-slate-50 placeholder:text-text-muted focus:outline-none focus:border-accent focus:bg-white transition-all min-h-[100px] shadow-inner"
-                    placeholder="Masukkan alamat lengkap sesuai KTP/Domisili..."
-                  />
-                ) : (
-                  <p className="text-[0.9375rem] font-bold text-text-header py-4 px-4 bg-slate-50 border border-slate-100 rounded-xl min-h-[80px] leading-relaxed">
-                    {user?.address || <span className="text-text-muted/40 italic font-normal text-sm">Belum diatur</span>}
-                  </p>
-                )}
-              </div>
-
               {isEditing && (
                 <div className="flex justify-end gap-4 pt-8 border-t border-border">
                   <Button 
                     type="button" 
                     variant="ghost" 
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => { setIsEditing(false); setSubmitError(null); }}
+                    disabled={isSubmitting}
                     className="rounded-xl font-bold text-xs uppercase tracking-widest text-text-muted hover:bg-slate-100 px-6 h-11 transition-all"
                   >
                     Batalkan
                   </Button>
                   <Button 
                     type="submit" 
-                    className="rounded-xl flex gap-2 font-bold text-xs uppercase tracking-widest h-11 px-8 shadow-lg shadow-accent/25 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    disabled={isSubmitting}
+                    className="rounded-xl flex gap-2 font-bold text-xs uppercase tracking-widest h-11 px-8 shadow-lg shadow-accent/25 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                   >
-                    <Save className="w-4 h-4" />
-                    Simpan Profil
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        Simpan Profil
+                      </>
+                    )}
                   </Button>
                 </div>
               )}

@@ -70,7 +70,7 @@ export function DataTable<T extends { id: string | number }>({
   };
 
   return (
-    <div className="bg-white rounded-[2rem] border border-border shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
       {/* Table Header / Toolbar */}
       <div className="p-6 border-b border-border bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative group w-full md:w-80">
@@ -98,7 +98,7 @@ export function DataTable<T extends { id: string | number }>({
                 <th 
                   key={idx} 
                   className={cn(
-                    "px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest",
+                    "px-6 py-4 text-xs font-semibold text-text-muted tracking-wide",
                     col.className
                   )}
                   style={{ width: col.width }}
@@ -107,7 +107,7 @@ export function DataTable<T extends { id: string | number }>({
                 </th>
               ))}
               {actions && (
-                <th className="px-6 py-4 text-[0.7rem] font-black text-text-muted uppercase tracking-widest text-right">
+                <th className="px-6 py-4 text-xs font-semibold text-text-muted tracking-wide text-right">
                   Aksi
                 </th>
               )}

@@ -52,9 +52,9 @@ export const ExportLKB: React.FC = () => {
 
   // TTE Anchor States
   const [enableAnchorAtasan, setEnableAnchorAtasan] = useState<boolean>(false);
-  const [anchorAtasanText, setAnchorAtasanText] = useState<string>('$ttd_atasan');
+  const [anchorAtasanText, setAnchorAtasanText] = useState<string>('${ttd_pengirim2}');
   const [enableAnchorPegawai, setEnableAnchorPegawai] = useState<boolean>(false);
-  const [anchorPegawaiText, setAnchorPegawaiText] = useState<string>('$ttd_pegawai');
+  const [anchorPegawaiText, setAnchorPegawaiText] = useState<string>('$ttd_pengirim1');
 
   // Supervisor and Employee details for signature autofill
   const [customAtasanName, setCustomAtasanName] = useState<string>('');
@@ -80,7 +80,7 @@ export const ExportLKB: React.FC = () => {
   // Dynamic column visibility toggles
   const [showColumns, setShowColumns] = useState({
     status: true,
-    perkin: true,
+    perkin: false,
     iksk: true,
     volume: true,
     uraian: true
@@ -200,7 +200,7 @@ export const ExportLKB: React.FC = () => {
   }, [showColumns]);
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-24 space-y-8 px-4 sm:px-6">
+    <div className="w-full pb-24 space-y-8">
       {/* Dynamic Theme & Font Injection for Printing (Aggressive Resets) */}
       <style>{`
         @media print {
@@ -589,10 +589,9 @@ export const ExportLKB: React.FC = () => {
                 {/* Print Sheet Header */}
                 <div className="flex items-center gap-5 border-b-2 border-slate-800 pb-5 mb-6">
                   <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Logo_Kementerian_Agama.svg/1200px-Logo_Kementerian_Agama.svg.png"
+                    src={`${(import.meta.env.VITE_LINK_API || '').replace(/\/api\/?$/, '')}/v2/logo-kemenag.png`}
                     alt="Logo Kemenag"
-                    className="w-14 h-14 object-contain report-header-logo shrink-0"
-                    referrerPolicy="no-referrer"
+                    className="w-14 h-14 object-contain shrink-0 report-header-logo"
                   />
                   <div className="flex-1">
                     <h2 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight leading-snug">
@@ -608,7 +607,7 @@ export const ExportLKB: React.FC = () => {
                 <div className="grid grid-cols-[110px_10px_1fr] gap-y-1.5 text-xs font-semibold text-slate-800 mb-6 max-w-2xl border bg-slate-50/50 p-4 rounded-xl border-slate-200">
                   <span className="text-slate-500 font-medium">Nama Pegawai</span>
                   <span>:</span>
-                  <span className="uppercase text-slate-900 font-bold">{customPegawaiName || '-'}</span>
+                  <span className="text-slate-900 font-bold">{customPegawaiName || '-'}</span>
 
                   <span className="text-slate-500 font-medium">NIP</span>
                   <span>:</span>
@@ -633,9 +632,7 @@ export const ExportLKB: React.FC = () => {
                         {showColumns.status && (
                           <th className="border border-slate-400 p-2.5 text-center w-24 col-status">Status</th>
                         )}
-                        {showColumns.perkin && (
-                          <th className="border border-slate-400 p-2.5 text-center w-36 col-perkin">SK / Perkin</th>
-                        )}
+
                         {showColumns.iksk && (
                           <th className="border border-slate-400 p-2.5 text-center w-40 col-iksk">Indikator Kinerja</th>
                         )}
@@ -659,11 +656,6 @@ export const ExportLKB: React.FC = () => {
                             {showColumns.status && (
                               <td className="border border-slate-400 p-2.5 text-center text-slate-700 font-medium col-status">
                                 {record.status_kehadiran}
-                              </td>
-                            )}
-                            {showColumns.perkin && (
-                              <td className="border border-slate-400 p-2.5 font-semibold text-slate-900 leading-normal col-perkin">
-                                {record.perkin_name}
                               </td>
                             )}
                             {showColumns.iksk && (
@@ -704,7 +696,7 @@ export const ExportLKB: React.FC = () => {
                         {/* Placeholder signature area */}
                         <div className="w-40 border-b border-dashed border-slate-300/40 no-print" />
                       </div>
-                      <p className="uppercase text-slate-900">
+                      <p className="text-slate-900">
                         {customAtasanName ? `( ${customAtasanName} )` : '( ........................................ )'}
                       </p>
                       <p className="text-[0.65rem] md:text-xs font-semibold text-slate-600 mt-1">
@@ -723,7 +715,7 @@ export const ExportLKB: React.FC = () => {
                         {/* Placeholder signature area */}
                         <div className="w-40 border-b border-dashed border-slate-300/40 no-print" />
                       </div>
-                      <p className="uppercase text-slate-900">
+                      <p className="text-slate-900">
                         ( {customPegawaiName || '........................................'} )
                       </p>
                       <p className="text-[0.65rem] md:text-xs font-semibold text-slate-600 mt-1">
@@ -786,7 +778,7 @@ export const ExportLKB: React.FC = () => {
                       type="text"
                       value={anchorAtasanText}
                       onChange={(e) => setAnchorAtasanText(e.target.value)}
-                      placeholder="Contoh: $ttd_atasan"
+                      placeholder="Contoh: ${ttd_pengirim2}"
                       className="h-10 rounded-xl bg-white border-slate-200 text-xs font-semibold"
                     />
                   )}

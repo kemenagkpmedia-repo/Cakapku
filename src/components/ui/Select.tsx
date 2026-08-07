@@ -79,7 +79,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     useEffect(() => {
       if (!isOpen) return;
 
-      const handleClickOutside = (event: MouseEvent) => {
+      const handleClickOutside = (event: MouseEvent | TouchEvent) => {
         const target = event.target as Node;
         if (
           containerRef.current && !containerRef.current.contains(target) &&
@@ -89,31 +89,37 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         }
       };
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
       };
     }, [isOpen]);
 
-    // Close on scroll of any ancestor (position would become stale)
+    // Reposition on scroll of any ancestor or resize (keeps position accurate without closing on mobile keyboard show)
     useEffect(() => {
       if (!isOpen) return;
 
       const handleScroll = (e: Event) => {
-        // Don't close if scrolling inside the dropdown itself
+        // Don't reposition/close if scrolling inside the dropdown itself
         if (dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
           return;
         }
-        setIsOpen(false);
+        updatePosition();
+      };
+
+      const handleResize = () => {
+        updatePosition();
       };
 
       // Use capture to catch scroll on any ancestor
       document.addEventListener('scroll', handleScroll, true);
-      window.addEventListener('resize', () => setIsOpen(false));
+      window.addEventListener('resize', handleResize);
       return () => {
         document.removeEventListener('scroll', handleScroll, true);
-        window.removeEventListener('resize', () => setIsOpen(false));
+        window.removeEventListener('resize', handleResize);
       };
-    }, [isOpen]);
+    }, [isOpen, updatePosition]);
 
     // Sync local state when the DOM value is modified programmatically (e.g., by React Hook Form)
     useEffect(() => {
@@ -207,17 +213,17 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           left: dropdownPosition.left,
           width: dropdownPosition.width,
         }}
-        className="z-[9999] bg-white border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[300px]"
+        className="z-[9999] bg-white border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[300px] text-xs text-text-main"
       >
         {/* Search Input Box */}
-        <div className="p-3 border-b border-border bg-slate-50/50 flex items-center gap-2">
-          <Search className="w-4 h-4 text-text-muted shrink-0" />
+        <div className="p-2.5 border-b border-border bg-slate-50/50 flex items-center gap-2">
+          <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari..."
-            className="w-full bg-transparent border-none p-0 text-[0.8125rem] font-semibold text-text-header placeholder:text-text-muted focus:outline-none focus:ring-0"
+            className="w-full bg-transparent border-none p-0 text-xs font-medium text-text-header placeholder:text-text-muted focus:outline-none focus:ring-0"
             onClick={(e) => e.stopPropagation()}
             autoFocus
           />
@@ -233,7 +239,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         </div>
 
         {/* Options List */}
-        <div className="overflow-y-auto py-1.5 divide-y divide-slate-50">
+        <div className="overflow-y-auto py-1 divide-y divide-slate-50">
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, idx) => {
               const isSelected = String(option.value) === String(currentValue);
@@ -241,7 +247,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                 return (
                   <div
                     key={`${option.value}-${idx}`}
-                    className="px-4 py-2 text-[0.7rem] font-extrabold uppercase tracking-widest text-text-muted bg-slate-50/50 select-none italic"
+                    className="px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-widest text-text-muted bg-slate-50/50 select-none italic"
                   >
                     {option.label}
                   </div>
@@ -252,16 +258,16 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                   key={`${option.value}-${idx}`}
                   onClick={() => handleSelectOption(option.value)}
                   className={cn(
-                    'px-4 py-2.5 font-semibold cursor-pointer select-none hover:bg-accent/5 hover:text-accent transition-colors text-left flex items-center justify-between',
-                    isSelected && 'bg-accent/10 text-accent font-extrabold'
+                    'px-3 py-2 font-medium cursor-pointer select-none hover:bg-accent/5 hover:text-accent transition-colors text-left flex items-center justify-between text-xs text-text-main w-full',
+                    isSelected && 'bg-accent/10 text-accent font-semibold'
                   )}
                 >
-                  <span className="truncate">{option.label}</span>
+                  <span className="whitespace-normal break-words w-full">{option.label}</span>
                 </div>
               );
             })
           ) : (
-            <div className="px-4 py-4 text-center text-text-muted italic">
+            <div className="px-3 py-3 text-center text-text-muted italic text-xs">
               Tidak ditemukan
             </div>
           )}
@@ -272,19 +278,19 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div
         ref={containerRef}
-        className="relative w-full text-[0.8125rem] text-text-main"
+        className="relative w-full text-xs text-text-main"
       >
         {/* Fake Select Box */}
         <div
           onClick={() => !disabled && setIsOpen(!isOpen)}
           className={cn(
-            'flex items-center justify-between w-full px-3 py-2 border border-border rounded-xl bg-white cursor-pointer select-none transition-all focus:outline-none focus:border-accent min-h-[2.75rem] font-semibold text-left',
+            'flex items-center justify-between w-full px-3 py-2 border border-border rounded-xl bg-white cursor-pointer select-none transition-all focus:outline-none focus:border-accent min-h-[2.5rem] font-medium text-left text-xs',
             isOpen && 'border-accent ring-2 ring-accent/10',
             disabled && 'cursor-not-allowed opacity-50 bg-slate-50 border-border',
             className
           )}
         >
-          <span className={cn('truncate', !selectedOption && 'text-text-muted font-normal')}>
+          <span className={cn('whitespace-normal break-words w-full py-1', !selectedOption && 'text-text-muted font-normal')}>
             {selectedOption ? selectedOption.label : placeholder || '-- Pilih --'}
           </span>
           <div className="flex items-center gap-1.5 shrink-0 text-text-muted ml-2">
@@ -299,7 +305,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
-            <ChevronDown className={cn('w-4 h-4 transition-transform duration-200 shrink-0', isOpen && 'rotate-180')} />
+            <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200 shrink-0', isOpen && 'rotate-180')} />
           </div>
         </div>
 
